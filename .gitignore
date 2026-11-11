@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.log
+*.zip
+*.exe
+*.dll
+*.addon32
+runtime/
+settings.json
+ch_chain.json
+*Inventory.txt
+eqlog_*.txt

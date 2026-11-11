@@ -1,0 +1,12 @@
+{
+  "characters": {},
+  "weapons": {},
+  "spells": {},
+  "notes": [
+    "Equipped item IDs are resolved automatically from Lucy; no preset weapon catalog is required.",
+    "Retrieved base stats are not certified P99 era data. Modern displayed item damage bonus is never used.",
+    "Melee hate uses damage plus the level/delay bonus table. Bard songs and unmodeled procs keep totals partial.",
+    "Export after equipment changes. Tank-relative percentage is unavailable from personal data alone."
+  ],
+  "automatic_lookup": true
+}

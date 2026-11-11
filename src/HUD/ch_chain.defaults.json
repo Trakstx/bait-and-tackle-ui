@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "template": "{slot} CH -- {target}",
+  "channel": "any",
+  "roster": [],
+  "my_slot": "",
+  "cast_seconds": 10,
+  "interval_seconds": 3,
+  "idle_seconds": 30,
+  "sound": false
+}
