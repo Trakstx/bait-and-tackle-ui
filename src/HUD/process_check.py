@@ -3,7 +3,10 @@ import ctypes
 from ctypes import wintypes
 
 
-def is_game_running():
+def find_game_processes(executable=None):
+    from pathlib import Path
+    from session_lifecycle import k, process_path
+    matches = []
     class PROCESSENTRY32W(ctypes.Structure):
         _fields_ = [
             ('dwSize', wintypes.DWORD), ('cntUsage', wintypes.DWORD),
@@ -29,14 +32,27 @@ def is_game_running():
         ok = kernel.Process32FirstW(snapshot, ctypes.byref(entry))
         while ok:
             if entry.szExeFile.casefold() == 'eqgame.exe':
-                return True
+                if executable is None:
+                    matches.append(entry.th32ProcessID)
+                else:
+                    handle = k.OpenProcess(0x1000, False, entry.th32ProcessID)
+                    if handle:
+                        try:
+                            if Path(process_path(handle)).resolve() == Path(executable).resolve():
+                                matches.append(entry.th32ProcessID)
+                        finally:
+                            k.CloseHandle(handle)
             ok = kernel.Process32NextW(snapshot, ctypes.byref(entry))
         error = ctypes.get_last_error()
         if error not in (0, 18):  # ERROR_NO_MORE_FILES is normal completion.
             raise ctypes.WinError(error)
-        return False
+        return matches
     finally:
         kernel.CloseHandle(snapshot)
+
+
+def is_game_running():
+    return bool(find_game_processes())
 
 
 if __name__ == '__main__':

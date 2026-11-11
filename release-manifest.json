@@ -1,11 +1,8 @@
 {
   "schema_version": 1,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "channel": "preview",
-  "asset": "Bait-and-Tackle-UI-DPS-CH-v0.6.0.zip",
-  "sha256": "3402c16b4e15eaa0073251c5cb7fa4b3e9b72f2f1100e444ac5e64ae2bcf1d85",
-  "size": 18777687,
-  "repository": "Trakstx/bait-and-tackle-ui",
-  "release_url": "https://github.com/Trakstx/bait-and-tackle-ui/releases/tag/v0.6.0",
-  "download_url": "https://github.com/Trakstx/bait-and-tackle-ui/releases/download/v0.6.0/Bait-and-Tackle-UI-DPS-CH-v0.6.0.zip"
+  "asset": "Bait-and-Tackle-UI-DPS-CH-v0.6.1.zip",
+  "sha256": "a0d069eef82c37c9236597f75f59f386307b64af7ae6fb212790540354fa786e",
+  "size": 18779752
 }
