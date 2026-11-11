@@ -2,12 +2,15 @@
 import ctypes
 from ctypes import wintypes
 import json
+import hashlib
+import atexit
 import os
 from pathlib import Path
 import subprocess
 import sys
 import time
-from process_check import is_game_running
+from process_check import find_game_processes
+from session_lifecycle import HelperJob, k, process_path
 
 base = Path(__file__).resolve().parent
 game = base.parent
@@ -41,6 +44,13 @@ def main():
         if result <= 32:
             raise RuntimeError('Windows did not authorize starting Bait & Tackle.')
         return
+    k.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+    k.CreateMutexW.restype = wintypes.HANDLE
+    session_mutex = k.CreateMutexW(None, False, 'Local\\BFT_Session_' + hashlib.sha256(str(game.resolve()).casefold().encode()).hexdigest()[:24])
+    if not session_mutex: raise ctypes.WinError(ctypes.get_last_error())
+    already_running = ctypes.get_last_error() == 183
+    atexit.register(k.CloseHandle, session_mutex)
+    if already_running: return
     config = json.loads((base / 'config.json').read_text())
     log = Path(config.get('log', str(game / 'Logs/eqlog_Character_Server.txt')))
     automatic = config.get('auto_detect', True)
@@ -51,54 +61,35 @@ def main():
     if not automatic and not log.is_file():
         alert('The configured character log was not found:\n' + str(log))
         return
-    attach = is_game_running()
+    executable = (game / 'eqgame.exe').resolve()
+    matches = find_game_processes(executable)
+    if len(matches) > 1:
+        raise RuntimeError('More than one EverQuest session is open from this folder. Close the extra session first.')
     python = Path(sys.executable)
-    pythonw = python.with_name('pythonw.exe')
-    if pythonw.is_file():
-        python = pythonw
-    with (runtime / 'feed.log').open('a') as output:
+    if python.with_name('pythonw.exe').is_file(): python = python.with_name('pythonw.exe')
+    owner = None
+    handle = None
+    job = HelperJob()
+    try:
+        if matches:
+            handle = k.OpenProcess(0x101000, False, matches[0])
+            if not handle: raise ctypes.WinError(ctypes.get_last_error())
+            if Path(process_path(handle)).resolve() != executable:
+                raise RuntimeError('The selected EverQuest process changed. Try again.')
+        else:
+            owner = subprocess.Popen([str(executable), 'patchme'], cwd=game)
+            handle = owner._handle
+        os.environ['BFT_MANAGED_SESSION'] = '1'
         feed_args = ['--auto', '--logs-dir', str(logs_dir)] if automatic else ['--log', str(log)]
-        feed = subprocess.Popen([str(python), str(base / 'feeder.py'), *feed_args],
-            cwd=base, stdout=output, stderr=output, creationflags=subprocess.CREATE_NO_WINDOW)
-        chain = None
-        try:
-            chain = subprocess.Popen([str(python), str(base / 'ch_overlay.py'), '--game', str(game),
-                '--logs-dir', str(logs_dir)], cwd=base, stdout=output, stderr=output,
-                creationflags=subprocess.CREATE_NO_WINDOW)
-            time.sleep(0.5)
-            if feed.poll() not in (None, 0):
-                raise RuntimeError('The log feed could not start. See ' + str(runtime / 'feed.log'))
-            if attach:
-                # Reconnect to an already-open game without launching a second copy.
-                while is_game_running():
-                    time.sleep(1)
-                return
-            info = SHELLEXECUTEINFO()
-            info.cbSize = ctypes.sizeof(info)
-            info.fMask = 0x40  # SEE_MASK_NOCLOSEPROCESS
-            info.lpVerb = 'open'
-            info.lpFile = str(game / 'eqgame.exe')
-            info.lpParameters = 'patchme'
-            info.lpDirectory = str(game)
-            info.nShow = 1
-            shell = ctypes.WinDLL('shell32', use_last_error=True)
-            shell.ShellExecuteExW.argtypes = [ctypes.POINTER(SHELLEXECUTEINFO)]
-            shell.ShellExecuteExW.restype = wintypes.BOOL
-            if not shell.ShellExecuteExW(ctypes.byref(info)):
-                raise ctypes.WinError(ctypes.get_last_error())
-            if info.hProcess:
-                kernel = ctypes.WinDLL('kernel32', use_last_error=True)
-                kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
-                kernel.CloseHandle.argtypes = [wintypes.HANDLE]
-                kernel.WaitForSingleObject(info.hProcess, 0xFFFFFFFF)
-                kernel.CloseHandle(info.hProcess)
-        finally:
-            if chain is not None and chain.poll() is None:
-                chain.terminate()
-                chain.wait(timeout=5)
-            if feed.poll() is None:
-                feed.terminate()
-                feed.wait(timeout=5)
+        job.start([str(python), str(base / 'feeder.py'), *feed_args], base)
+        job.start([str(python), str(base / 'ch_overlay.py'), '--game', str(game),
+            '--logs-dir', str(logs_dir)], base)
+        # Wait on this exact process, including while minimized. No permanent watcher.
+        k.WaitForSingleObject(handle, 0xffffffff)
+    finally:
+        # Closing the job also stops owned browser descendants, even after a launcher crash.
+        job.close()
+        if handle and owner is None: k.CloseHandle(handle)
 
 if __name__ == '__main__':
     try:

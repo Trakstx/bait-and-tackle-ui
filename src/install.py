@@ -105,7 +105,7 @@ def main():
     settings.update({'auto_detect': True, 'logs_dir': str(game / 'Logs'), 'skin': SKIN})
     settings.setdefault('pet_names_by_character', {})
     config.write_text(json.dumps(settings, indent=2))
-    owned.write_text(json.dumps({'version': '0.6.0-settings-hub', 'files': installed,
+    owned.write_text(json.dumps({'version': '0.6.1-settings-hub', 'files': installed,
         'backup': str(backup)}, indent=2))
     launcher = game / 'BFT_HUD/launcher.py'
     pythonw = game / 'BFT_HUD/runtime/pythonw.exe'

@@ -62,7 +62,7 @@ class Hub:
             user=ctypes.WinDLL('user32',use_last_error=True)
             user.FindWindowW.argtypes=[wintypes.LPCWSTR,wintypes.LPCWSTR];user.FindWindowW.restype=wintypes.HWND
             user.SetForegroundWindow.argtypes=[wintypes.HWND];user.ShowWindow.argtypes=[wintypes.HWND,ctypes.c_int]
-            window=user.FindWindowW(None,'Bait & Tackle — Settings')
+            window=user.FindWindowW(None,'Bait & Tackle â€” Settings')
             if window and getattr(self,'opened',False):
                 user.ShowWindow(window,9);user.SetForegroundWindow(window);return
             if window:
@@ -73,7 +73,7 @@ class Hub:
             for variable in ['PROGRAMFILES(X86)','PROGRAMFILES','LOCALAPPDATA']:
                 edge=Path(os.environ.get(variable,''))/'Microsoft/Edge/Application/msedge.exe'
                 if edge.is_file():
-                    subprocess.Popen([str(edge),'--app='+self.url,'--user-data-dir='+str(settings_store.RUNTIME/'settings-browser'),'--no-first-run'],creationflags=subprocess.CREATE_NO_WINDOW)
+                    subprocess.Popen([str(edge),'--app='+self.url,'--user-data-dir='+str(settings_store.RUNTIME/('settings-browser-'+str(os.getpid()))),'--no-first-run'],creationflags=subprocess.CREATE_NO_WINDOW)
                     self.opened=True
                     return
         webbrowser.open(self.url,new=0,autoraise=True)
@@ -84,6 +84,6 @@ class Hub:
             user=ctypes.WinDLL('user32',use_last_error=True)
             user.FindWindowW.argtypes=[wintypes.LPCWSTR,wintypes.LPCWSTR];user.FindWindowW.restype=wintypes.HWND
             user.PostMessageW.argtypes=[wintypes.HWND,wintypes.UINT,ctypes.c_size_t,ctypes.c_ssize_t]
-            window=user.FindWindowW(None,'Bait & Tackle — Settings')
+            window=user.FindWindowW(None,'Bait & Tackle â€” Settings')
             if window:user.PostMessageW(window,0x10,0,0)
         self.server.shutdown();self.server.server_close()

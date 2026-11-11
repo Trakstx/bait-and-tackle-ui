@@ -103,7 +103,7 @@ class Overlay:
                     self.beep_key = key
                     import winsound
                     winsound.MessageBeep(winsound.MB_OK)
-        else: text(114, 5, (status + ' — ' + self.character)[:max(10, (width-295)//8)], muted)
+        else: text(114, 5, (status + ' â€” ' + self.character)[:max(10, (width-295)//8)], muted)
         casts = snap['casts'][:max(1, min(8, width//160))]
         if casts:
             cell = (width-20)/len(casts)
@@ -114,7 +114,7 @@ class Overlay:
                 name = f"{cast['slot']} {cast['speaker']}  {cast['remaining']:.1f}s"
                 text(x+5, 30, name[:max(4, int((end-x-10)//7))], light, ('Consolas', 9))
         else: text(10, 32, 'Waiting for a matching announcement. Press Ctrl+J to set your raid format.', muted, ('Consolas', 9))
-        text(10, 60, 'ESTIMATED CAST TIMERS — ANNOUNCEMENTS DO NOT CONFIRM HEALS', '#627e85', ('Consolas', 8))
+        text(10, 60, 'ESTIMATED CAST TIMERS â€” ANNOUNCEMENTS DO NOT CONFIRM HEALS', '#627e85', ('Consolas', 8))
 
     def tick(self):
         now = time.time(); mono = time.monotonic(); game = self.win.game()
@@ -137,7 +137,7 @@ class Overlay:
                         self.chain = Chain(self.chain.config); self.beep_key = None
                     if game: self.seen_game = True; self.gone_since = None
                     elif self.seen_game and self.gone_since is None: self.gone_since = mono
-                    elif self.gone_since and mono-self.gone_since > 15:
+                    elif self.gone_since and mono-self.gone_since > 15 and not os.environ.get('BFT_MANAGED_SESSION'):
                         self.root.destroy(); return
                 for line in self.follower.read_lines(): self.chain.consume(line, now, self.character.split(' [')[0])
                 if game and self.win.u.GetForegroundWindow() == game[0]:

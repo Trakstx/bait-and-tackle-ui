@@ -2,7 +2,7 @@
 
 A Project 1999 UI skin with a DPS display, a log-based Complete Heal chain strip, and one HTML settings panel.
 
-**First public preview: v0.6.0.** Live raid-chain behavior still needs player validation. This is a community project, not a claim of Project 1999 staff approval.
+**First public preview: v0.6.1.** Live raid-chain behavior still needs player validation. This is a community project, not a claim of Project 1999 staff approval.
 
 ## Download and install
 
@@ -13,6 +13,8 @@ Download the attached release ZIP from **Releases**, then extract the entire fol
 3. Start with the installed **Play Bait and Tackle** desktop launcher.
 4. Enable logging with `/log on`.
 5. Select the skin with `/loadskin BAIT_AND_FUCKING_TACLE 1`.
+
+The combined launcher stops its helper process tree when its specific EverQuest session exits. No permanent watcher is installed. Opening the game directly does not start the helpers.
 
 Use windowed or borderless EverQuest; the CH overlay does not support exclusive fullscreen.
 
