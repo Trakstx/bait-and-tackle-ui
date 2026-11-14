@@ -9,8 +9,8 @@ import os
 import json
 from pathlib import Path
 from combat import CombatMeter
-import settings_store
 from threat import ThreatMeter
+import settings_store
 from logwatch import LogFollower, identity
 
 MAP_NAME = r"Local\BFT_HUD_V1"
@@ -18,9 +18,8 @@ MAGIC = 0x31465442
 # magic, generation, monotonic heartbeat, DPS, damage, encounter seconds, demo flag
 PACK = struct.Struct("<IIdffff")
 EXTRA = struct.Struct("<16f64s64s")
-THREAT = struct.Struct("<4f")
 
-def publish(memory, generation, dps, damage, seconds, demo, stats=None, target="Waiting for combat", character="Waiting for login", threat=None):
+def publish(memory, generation, dps, damage, seconds, demo, stats=None, target="Waiting for combat", character="Waiting for login"):
     # Seqlock: an odd generation marks a write in progress.
     memory.seek(4)
     memory.write(struct.pack("<I", generation * 2 + 1))
@@ -29,7 +28,6 @@ def publish(memory, generation, dps, damage, seconds, demo, stats=None, target="
     memory.write(payload)
     if stats is None: stats = [0.] * 15 + [3.]
     memory.write(EXTRA.pack(*stats, target.encode("ascii", "replace")[:63].ljust(64, b"\0"), character.encode("ascii", "replace")[:63].ljust(64, b"\0")))
-    memory.write(THREAT.pack(*(threat if threat is not None else [0.,0.,0.,0.])))
     memory.seek(4)
     memory.write(struct.pack("<I", generation * 2 + 2))
 
@@ -58,17 +56,23 @@ def main():
     config = json.loads(config_path.read_text()) if config_path.is_file() else {}
     follower = LogFollower(args.logs_dir, pinned=None if args.auto or not args.log else args.log)
     meter = CombatMeter()
-    threat_config_path = Path(__file__).with_name('threat_config.json')
-    threat_config = json.loads(threat_config_path.read_text()) if threat_config_path.exists() else {}
-    threat_meter = ThreatMeter(Path(args.logs_dir).parent, '', threat_config)
     character = 'Waiting for login'
+    threat_config=json.loads((Path(__file__).with_name('threat_config.json')).read_text())
+    threat_meter=ThreatMeter(Path(args.logs_dir).parent,'',threat_config)
+    threat_report_at=0
     def switched():
         nonlocal meter, character, threat_meter
         meter.finish('character/log changed')
         name, server = identity(follower.path)
-        threat_meter.close()
-        threat_meter = ThreatMeter(Path(args.logs_dir).parent, name, threat_config)
         character = name + ' [' + server + ']'
+        threat_meter.close();threat_meter=ThreatMeter(Path(args.logs_dir).parent,name,threat_config)
+        try:
+            with follower.path.open('rb') as log:
+                log.seek(max(0,follower.path.stat().st_size-1048576));tail=log.read().decode('utf-8',errors='replace')
+            for line in tail.splitlines():
+                match=__import__('combat').STAMP.match(line)
+                if match:threat_meter.learn(match[2])
+        except OSError:pass
         history = runtime / 'history' / (follower.path.stem + '.jsonl')
         pets = config.get('pet_names_by_character', {}).get(name, config.get('pet_names', []))
         meter = CombatMeter(history=history, pet_names=pets)
@@ -82,7 +86,6 @@ def main():
     started = time.monotonic()
     generation = 0
     last_file_check = 0
-    last_threat_report = 0
     try:
         with mmap.mmap(-1, 4096, tagname=MAP_NAME, access=mmap.ACCESS_WRITE) as memory:
             while not args.seconds or time.monotonic() - started < args.seconds:
@@ -93,8 +96,7 @@ def main():
                     stats = [dps, dps*.85, damage, seconds, 275., 100., 12., 89.3,
                              1240., 12., damage+25000., 135., 8., 1., 90., 3.]
                     target = "a drolvarg savage"
-                    character = "Demo character [Demo]"
-                    threat = [1200.,1450.,140.,1.]
+                    character = "Trackstack [Green]"
                 else:
                     if time.monotonic() - last_file_check > 1:
                         last_file_check = time.monotonic()
@@ -107,11 +109,13 @@ def main():
                         threat_meter.consume(line)
                     stats, target = meter.snapshot(time.time())
                     dps, damage, seconds = stats[0], stats[2], stats[3]
-                    threat = threat_meter.snapshot(time.time())
-                    if time.monotonic() - last_threat_report >= 2:
-                        last_threat_report = time.monotonic()
-                        threat_meter.write_status(runtime / "threat-status.json", time.time())
-                publish(memory, generation, dps, damage, seconds, args.demo, stats, target, character, threat)
+                if not args.demo:
+                    prefs=settings_store.load().get('aggro',{})
+                    estimate=threat_meter.snapshot(time.time())
+                    stats[9:13]=estimate if prefs.get('enabled',True) else [0.,0.,0.,-1.]
+                    if time.monotonic()-threat_report_at>=1:
+                        threat_report_at=time.monotonic();threat_meter.write_status(runtime/'threat-status.json',time.time())
+                publish(memory, generation, dps, damage, seconds, (args.demo if getattr(meter,'visible',True) else -2.0), stats, target, character)
                 generation += 1
                 time.sleep(0.2)
     except KeyboardInterrupt:

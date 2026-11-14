@@ -10,6 +10,8 @@ import os
 from itemlookup import ItemResolver
 from pathlib import Path
 from combat import parse, STAMP, event_time
+from buff_timers import WHO,TITLES
+CLASSES={"warrior":"WAR","paladin":"PAL","shadow knight":"SHD","ranger":"RNG","monk":"MNK","bard":"BRD","rogue":"ROG"}
 
 CAST = re.compile(r"^You begin casting (.+?)[.!]$")
 RESIST = re.compile(r"^Your target resisted the (.+?)(?: spell)?[.!]$")
@@ -49,6 +51,11 @@ class ThreatMeter:
         self.signature = None
         self.pending = None
         self.last_activity = None
+
+    def learn(self,text):
+        m=WHO.match(text)
+        if m and m[3].casefold()==self.character.casefold():
+            kind=TITLES.get(m[2].casefold(),m[2].casefold());self.profile.update(level=int(m[1]),**{'class':CLASSES.get(kind,kind.upper())})
 
     def refresh_inventory(self, now):
         if self.resolver:
@@ -104,6 +111,7 @@ class ThreatMeter:
     def _table(self, target, now):
         key = target.casefold()
         self.target = key
+        if key in self.tables and now-self.tables[key]["last"]>45:self.tables.pop(key)
         return self.tables.setdefault(key, {"name":target,"low":0.,"high":0.,"start":now,"last":now,"partial":not self.profile.get("complete_model", False),"swings":0,"spells":0,"pending_swings":[]})
 
     def consume(self, line):
@@ -112,6 +120,7 @@ class ThreatMeter:
         try: now = event_time(stamp[1])
         except ValueError: return
         text = stamp[2]
+        self.learn(text)
         self.refresh_inventory(time.time())
         event = parse(line)
         if event and event.kind in ("death","zone"):
@@ -163,7 +172,7 @@ class ThreatMeter:
             target['pending_swings']=pending
         # State 0: export/profile missing, 1: partial, 2: modeled total, 3: stale gear.
         if self.gear_status != "READY": return [0.,0.,0.,3. if self.gear_status=="STALE" else 0.]
-        if not row: return [0.,0.,0.,4.]
+        if not row: return [0.,0.,0.,5.]
         if now-row["last"] > 120: return [0.,0.,0.,0.]
         if row["partial"] and row["high"] == 0: return [0.,0.,0.,4.]
         elapsed=max(1.,now-row["start"]+1.)
@@ -172,7 +181,7 @@ class ThreatMeter:
     def write_status(self, path, now):
         row = self.tables.get(self.target)
         payload = {"character":self.character,"updated":now,"gear_status":self.gear_status,
-                   "equipment":self.equipment,"resolved_items":self.resolved,"lookup_errors":self.resolver.errors if self.resolver else {},"target":row,"estimate":self.snapshot(now),
+                   "profile":self.profile,"equipment":self.equipment,"resolved_items":self.resolved,"lookup_errors":self.resolver.errors if self.resolver else {},"target":row,"estimate":self.snapshot(now),
                    "notes":"Personal estimate only. No tank comparison or server threat percentage. Unsupported abilities, procs, songs and other unobserved hate are not counted."}
         path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
         temp=path.with_suffix(".tmp");temp.write_text(json.dumps(payload,indent=2));temp.replace(path)

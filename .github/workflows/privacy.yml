@@ -1,0 +1,29 @@
+name: Repair commit email privacy
+on:
+  push:
+    paths: ['.github/workflows/privacy.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  scrub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rewrite this owner history using GitHub noreply email
+        shell: bash
+        env:
+          FILTER_BRANCH_SQUELCH_WARNING: '1'
+        run: |
+          set -euo pipefail
+          expected=$(git rev-parse HEAD)
+          oldtag=$(git rev-parse refs/tags/v0.6.1)
+          git filter-branch --force --env-filter '
+            if [ "$GIT_AUTHOR_NAME" = "Trackstack" ]; then export GIT_AUTHOR_EMAIL="20871007+Trakstx@users.noreply.github.com"; fi
+            if [ "$GIT_COMMITTER_NAME" = "Trackstack" ]; then export GIT_COMMITTER_EMAIL="20871007+Trakstx@users.noreply.github.com"; fi
+          ' --tag-name-filter cat -- --all
+          git push --force-with-lease=refs/heads/main:$expected origin HEAD:refs/heads/main
+          git push --force-with-lease=refs/tags/v0.6.1:$oldtag origin refs/tags/v0.6.1
+          test -z "$(git log main --format='%ae%n%ce' | grep -vE '(@users.noreply.github.com|noreply@github.com)$' || true)"

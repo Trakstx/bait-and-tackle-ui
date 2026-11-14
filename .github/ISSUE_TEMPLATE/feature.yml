@@ -1,0 +1,26 @@
+name: Feature request
+description: What would you like Bait & Tackle to do, and why?
+title: "[feature] "
+body:
+  - type: markdown
+    attributes:
+      value: "This is public. Do not include passwords, dashboard URLs, full logs, or private information. No email address is needed."
+  - type: input
+    id: version
+    attributes:
+      label: Bait & Tackle version
+      placeholder: 0.7.0
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Feature request details
+      description: What would you like Bait & Tackle to do, and why?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and examples
+      description: Windows version, resolution, affected feature, and optional sanitized screenshots or short excerpts.

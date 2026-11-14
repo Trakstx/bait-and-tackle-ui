@@ -1,47 +1,24 @@
-# Bait & Tackle UI
+# Bait & Tackle
 
-A Project 1999 UI skin with a DPS display, a log-based Complete Heal chain strip, and one HTML settings panel.
+An unofficial Project 1999 skin and companion dashboard for combat parsing, CH chains, buff estimates, maps, bank snapshots, class alerts, timers, layout copying, and optional rolling incident capture.
 
-**First public preview: v0.6.1.** Live raid-chain behavior still needs player validation. This is a community project, not a claim of Project 1999 staff approval.
+**0.7.0 release candidate.** The recorder still needs its final single-controller live validation. This is not a claim of P1999 staff approval.
 
-## Download and install
+## Install
 
-Download the attached release ZIP from **Releases**, then extract the entire folder.
+Download the playable ZIP from [Releases](https://github.com/Trakstx/bait-and-tackle-ui/releases), extract it, close EQ, and run **Install Bait and Tackle.cmd**. Launch through **Play Bait and Tackle**, enable `/log on`, and load `/loadskin BAIT_AND_FUCKING_TACLE 1`. Press **Ctrl+J** for the dashboard.
 
-1. Close EverQuest.
-2. Run **Install Bait and Tackle.cmd**. The installer includes a private Python/Tk runtime, verifies the package, backs up replaced files, and asks for your EverQuest folder if necessary.
-3. Start with the installed **Play Bait and Tackle** desktop launcher.
-4. Enable logging with `/log on`.
-5. Select the skin with `/loadskin BAIT_AND_FUCKING_TACLE 1`.
+## Documentation
 
-The combined launcher stops its helper process tree when its specific EverQuest session exits. No permanent watcher is installed. Opening the game directly does not start the helpers.
-
-Use windowed or borderless EverQuest; the CH overlay does not support exclusive fullscreen.
-
-## One settings panel
-
-Press **Ctrl+J while EverQuest is foreground** to open the Bait & Tackle HTML settings window.
-
-- **DPS:** fight-end timeout and pet names by character. Rolling DPS uses 12 seconds.
-- **CH chain:** announcement format, channel, roster, your slot, cast duration, cadence, idle reset, optional sound, and a sample-call tester.
-- **Aggro:** reserved for future settings; current threat estimates are experimental and incomplete.
-
-**Ctrl+H** opens DPS fight history. The CH strip follows the DPS position and passes mouse clicks through.
-
-Example format: `{slot} CH -- {target}` matches `001 CH -- Tankname`. Enter your raid's actual format and chain order. Timers estimate casts from chat announcements; they do not confirm landed heals or reliably account for fizzles or interruptions.
-
-## Personal data
-
-Logs, history, credentials, inventory exports, and personal preferences are not included. Preferences remain under `%LOCALAPPDATA%\BaitAndTackle`. Import/export profiles from the settings panel to share a raid configuration deliberately.
+- [Player guide and complete feature reference](docs/PLAYER-GUIDE.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Maintainer packaging, verification and release runbook](docs/RELEASING.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 ## Updates and feedback
 
-Updates are distributed through GitHub Releases. In-app update checks are planned and are not implemented in this preview. Include version, window resolution, reproduction steps, and a short sanitized log excerpt in bug reports. Do not upload account credentials or complete personal logs.
+The dashboard's **Updates & feedback** page checks GitHub, downloads a checksum-verified installer, and explains how to apply it with EQ closed. It never silently replaces loaded components.
 
-## Source and notices
+[Request a feature](https://github.com/Trakstx/bait-and-tackle-ui/issues/new?template=feature.yml) or [report a bug](https://github.com/Trakstx/bait-and-tackle-ui/issues/new?template=bug.yml). GitHub accounts are required. Posts are public; no maintainer email is needed. Never post credentials or complete personal logs.
 
-`src/` contains custom HUD code, installer and tests. The full skin templates and assets are included in the attached source archive and installer ZIP. The binary release also bundles CPython/Tk and ReShade. See **THIRD_PARTY_NOTICES.md** and the notices inside the download. Existing assets retain their original attribution; this repository does not relicense them as original Bait & Tackle artwork.
-
-## Development checks
-
-Run `python src/native-and-tests/test_chchain.py` and `python src/native-and-tests/test_settings_hub.py` from the repository root. The settings tests use a temporary local HTTP server. The installer source is intended for the assembled release folder, not for running directly from `src/`.
+Personal preferences remain under LocalAppData. Saved incidents remain in the folder you choose and are not automatically deleted. Log-based estimates cannot expose server-only combat or buff state. Read the feature limitations before relying on a display in a raid.
