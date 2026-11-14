@@ -1,0 +1,19 @@
+{
+  "version": "0.7.0",
+  "source": "actual dashboard rendered with synthetic fixture data",
+  "pages": 20,
+  "screenshots": {
+    "aggro.png": "0f86f56543a0fbdf942a4e3879480303c48832d4f05993df963483e4c3f14faf",
+    "bank.png": "76ef655c700b13df4e7df0a09a841a5ca5ff9c59b29570b85561657a75fbb5c1",
+    "buffs.png": "ab4c5b6f2120d6e4c4bde094bac23f0721dcfdc1ca37e3fcf5ddcdb1031783ec",
+    "ch.png": "3c3802bb2ab7973662034c239af233e9344fbdde1ffb6087432e721913d2beef",
+    "dps.png": "d8e7ca216c74bc4b6905603fe306dbd15b5325fdade137b86743b76c0381a3fb",
+    "experience.png": "8474158f68f729723a490fecf94d4a013ad4d90c1674a1533eff6b757f3bba05",
+    "maps.png": "8a135ede6dcc95e5caca4145d896d494de08f3c246777ed63a55578325c4a3c9",
+    "misc.png": "6f2519ff162dc042c31e1fe61340533b397dffc4e01e3aac8b7412365ebd4f49",
+    "recorder.png": "b54f9b7dde43a23c0138bdf83702f4b761d0dd05a4555a93b8a711d9dbf60d54",
+    "timers.png": "b6d6793ca344767c8bab903ac9bee94a6851945603e3261f52df3ded89a32754",
+    "triggers.png": "baab251fb2631df3c0a4b51b3de7df0ed5394ae465266c45a91d53389031122f",
+    "updates.png": "3b30798e7efb55520333eb11d88e390c578a07e3c1396104e7d64315d38e9f56"
+  }
+}

@@ -10,6 +10,9 @@ Download the playable ZIP from [Releases](https://github.com/Trakstx/bait-and-ta
 
 ## Documentation
 
+**[Open the illustrated wiki](docs/wiki/README.md)** — setup, feature walkthroughs, screenshots, troubleshooting, privacy and release operations.
+
+
 - [Player guide and complete feature reference](docs/PLAYER-GUIDE.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Maintainer packaging, verification and release runbook](docs/RELEASING.md)
