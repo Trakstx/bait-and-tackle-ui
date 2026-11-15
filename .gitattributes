@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.png -text
+*.jpg -text
+*.gif -text
+*.tga -text
+*.exe -text
+*.dll -text
+*.addon32 -text
