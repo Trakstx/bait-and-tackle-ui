@@ -2,7 +2,7 @@
 
 **Player documentation for v0.7.0 public preview.** Native EQ skin, companion meters and one local dashboard.
 
-[Download latest release](https://github.com/Trakstx/bait-and-tackle-ui/releases/latest) · [Request a feature](https://github.com/Trakstx/bait-and-tackle-ui/issues/new?template=feature.yml) · [Report a bug](https://github.com/Trakstx/bait-and-tackle-ui/issues/new?template=bug.yml)
+[Security candidate: download, test and AI review](Security-candidate.md) · [Download latest release](https://github.com/Trakstx/bait-and-tackle-ui/releases/latest) · [Request a feature](https://github.com/Trakstx/bait-and-tackle-ui/issues/new?template=feature.yml) · [Report a bug](https://github.com/Trakstx/bait-and-tackle-ui/issues/new?template=bug.yml)
 
 ![Dashboard sample showing a bank snapshot](images/bank.png)
 
