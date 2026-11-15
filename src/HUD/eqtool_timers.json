@@ -1,0 +1,911 @@
+{
+  "source": "https://github.com/smasherprog/EqTool",
+  "aoes": [
+    {
+      "name": "Stun Breath",
+      "zone": "necropolis",
+      "pattern": "(Your eardrums rupture\\.|staggers with intense pain\\.|You resist the Stun Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Cloud of Silence",
+      "zone": "growthplane",
+      "pattern": "(You are in a cloud of silence\\.|is surrounded by a cloud of silence\\.)",
+      "seconds": 180
+    },
+    {
+      "name": "Rain of Molten Lava",
+      "zone": "templeveeshan",
+      "pattern": "(Lava sears your skin\\.|skin is seared by lava\\.|You resist the Rain of Molten Lava spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Wave of Heat",
+      "zone": "templeveeshan",
+      "pattern": "(A blast of heat sears your skin\\.|skin sears\\.|You resist the Wave of Heat spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Wave of Cold",
+      "zone": "templeveeshan",
+      "pattern": "(A blast of cold freezes your skin\\.|skin freezes\\.|You resist the Wave of Cold spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Frost Breath - TOV",
+      "zone": "templeveeshan",
+      "pattern": "(body freezes as the frost hits you\\.|body freezes as the frost hits them\\.|You resist the Frost Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Frost Breath - Perma",
+      "zone": "permafrost",
+      "pattern": "(body freezes as the frost hits you\\.|body freezes as the frost hits them\\.|You resist the Frost Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Silver Breath - TOV",
+      "zone": "templeveeshan",
+      "pattern": "(You feel your skin freeze\\.|skin freezes\\.|You resist the Silver Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Silver Breath - WW",
+      "zone": "westwastes",
+      "pattern": "(You feel your skin freeze\\.|skin freezes\\.|You resist the Silver Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Freezing Breath",
+      "zone": "dreadlands",
+      "pattern": "(An icy cold shoots through your body|is slowed by the freezing blast\\.|You resist the Freezing Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Ceticious Cloud",
+      "zone": "emeraldjungle",
+      "pattern": "(Your legs lock in pain as you choke on the noxious poison\\.|doubles over in pain as the noxious poison|You resist the Ceticious Cloud spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Silver Breath - POG",
+      "zone": "growthplane",
+      "pattern": "(You feel your skin freeze\\.|skin freezes\\.|You resist the Silver Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Blinding Fear",
+      "zone": "sebilis",
+      "pattern": "(You freeze in terror\\.|You resist the Blinding Fear spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Poison Breath",
+      "zone": "sebilis",
+      "pattern": "(A green mist seeps in to your skin\\.|You resist the Poison Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Immolating Breath",
+      "zone": "skyfire",
+      "pattern": "(Your flesh is seared from your bones\\.|flesh is seared\\.|You resist the Immolating Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Mind Cloud",
+      "zone": "skyshrine",
+      "pattern": "(A cloud of pain covers you\\.|is covered by a cloud of pain\\.|You resist the Mind Cloud spell!)",
+      "seconds": 120
+    },
+    {
+      "name": "Ice Breath",
+      "zone": "skyshrine",
+      "pattern": "(Shards of magical ice rend you\\.|cut by shards of magical ice\\.|You resist the Ice Breath spell!)",
+      "seconds": 120
+    },
+    {
+      "name": "Lava Breath - Sol B",
+      "zone": "soldungb",
+      "pattern": "(Your body combusts as the lava hits you\\.|body combusts as the lava hits them\\.|You resist the Lava Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Lava Breath - TOV",
+      "zone": "templeveeshan",
+      "pattern": "(Your body combusts as the lava hits you\\.|body combusts as the lava hits them\\.|You resist the Lava Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Cloud of Disempowerment",
+      "zone": "templeveeshan",
+      "pattern": "(You feel your skin freeze\\.|skin freezes\\.|You resist the Cloud of Disempowerment spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Electric Blast",
+      "zone": "templeveeshan",
+      "pattern": "(Your body is electrified as lightning strikes you\\.|body is electrified as the lightning strikes\\.|You resist the Electric Blast spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Cloud of Fear",
+      "zone": "templeveeshan",
+      "pattern": "(Your mind is wracked by fear\\.|looks very afraid\\.|You resist the Cloud of Fear spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Bellowing Winds",
+      "zone": "templeveeshan",
+      "pattern": "(You begin to spin\\.|begins to spin\\.|You resist the Bellowing Winds spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Tsunami",
+      "zone": "templeveeshan",
+      "pattern": "(A tsunami crushes you\\.|is crushed by a wall of water\\.|You resist the Tsunami spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Wave of Flame",
+      "zone": "templeveeshan",
+      "pattern": "(You feel your skin burn\\.|skin burns\\.|You resist the Wave of Flame spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Scream of Chaos",
+      "zone": "templeveeshan",
+      "pattern": "(You experience chaotic weightlessness\\.|rises chaotically into the air\\.|You resist the Scream of Chaos spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Chaos Breath - TOV",
+      "zone": "templeveeshan",
+      "pattern": "(You experience chaotic weightlessness\\.|rises chaotically into the air\\.|You resist the Chaos Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Ancient Breath",
+      "zone": "templeveeshan",
+      "pattern": "(Your life force drains away\\.|You resist the Ancient Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Diseased Cloud - TOV",
+      "zone": "templeveeshan",
+      "pattern": "(body begins to rot\\.|You resist the Diseased Cloud spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Mesmerizing Breath",
+      "zone": "veeshan",
+      "pattern": "(You are in a cloud of silence\\.|is surrounded by a cloud of silence\\.|You resist the Mesmerizing Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Chaos Breath - VP",
+      "zone": "veeshan",
+      "pattern": "(You experience chaotic weightlessness\\.|rises chaotically into the air\\.|You resist the Chaos Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Stun Breath - VP",
+      "zone": "veeshan",
+      "pattern": "(Your eardrums rupture\\.|staggers with intense pain\\.|You resist the Stun Breath spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Stream of Acid",
+      "zone": "veeshan",
+      "pattern": "(Your body burns as the acid hits you\\.|body burns as the acid hits them\\.|You resist the Stream of Acid spell!)",
+      "seconds": 12
+    },
+    {
+      "name": "Lightning Breath",
+      "zone": "veeshan",
+      "pattern": "(Your body is electrified as the lightning strikes you\\.|body is electrified as the lightning strikes\\.|You resist the Lightning Breath spell!)",
+      "seconds": 12
+    }
+  ],
+  "boats": [
+    {
+      "boat": "BarrelBarge",
+      "name": "Oasis arrival",
+      "start": "oasis",
+      "end": "timorous",
+      "announcement": "Rack Stonebelly shouts, 'Da Barrel Barge will be here soon soon!'",
+      "trip": 779.75,
+      "offset": 119.0
+    },
+    {
+      "boat": "BarrelBarge",
+      "name": "TD from Oasis arrival",
+      "start": "timorous",
+      "end": "oasis",
+      "announcement": "",
+      "trip": 778.75,
+      "offset": 510.0
+    },
+    {
+      "boat": "BloatedBelly",
+      "name": "Overthere arrival",
+      "start": "overthere",
+      "end": "timorous",
+      "announcement": "Rack Stonebelly shouts, 'Da Bloated Belly be leaving da Overdere now!'",
+      "trip": 2025.0,
+      "offset": 1975.0
+    },
+    {
+      "boat": "MaidensVoyage",
+      "name": "BB to FV Transfer arrival",
+      "start": "butcher",
+      "end": "firiona",
+      "announcement": "Glisse Bluesea shouts 'The Maiden's Voyage is now ready to be boarded. Please form an orderly line to the shuttles, and remember, no pushing!",
+      "trip": 1230.0,
+      "offset": 0.0
+    },
+    {
+      "boat": "MaidensVoyage",
+      "name": "FV Transfer to BB arrival",
+      "start": "firiona",
+      "end": "butcher",
+      "announcement": "Glisse Bluesea shouts 'The Maiden's Voyage has departed the outpost at Firiona Vie. Please be ready to board the shuttles shortly, if you desire to make the journey to Kunark.",
+      "trip": 1230.0,
+      "offset": 771.0
+    },
+    {
+      "boat": "NroIcecladBoat",
+      "name": "NRo arrival",
+      "start": "nro",
+      "end": "iceclad",
+      "announcement": "Frankel the Pirate says 'Thar she be mates. All aboard thats goin aboard!'",
+      "trip": 519.0,
+      "offset": 0.0
+    },
+    {
+      "boat": "NroIcecladBoat",
+      "name": "Iceclad from NRo arrival",
+      "start": "iceclad",
+      "end": "nro",
+      "announcement": "",
+      "trip": 519.0,
+      "offset": 307.0
+    }
+  ],
+  "kael": [
+    "Bygloirn Omorden",
+    "Dagron Stonecutter",
+    "Barlek Stonefist",
+    "Gragek Mjlorkigar",
+    "Kelenek Bluadfeth",
+    "Veldern Blackhammer",
+    "Kragek Thunderforge",
+    "Stoem Lekbar",
+    "Bjarorm Mjlorn",
+    "Ulkar Jollkarek",
+    "Vylleam Vyaeltor",
+    "Jaglorm Ygorr",
+    "Yeeldan Spiritcaller"
+  ],
+  "zones": {
+    "airplane": {
+      "seconds": 28800,
+      "overrides": []
+    },
+    "akanon": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "arena": {
+      "seconds": 0.0,
+      "overrides": []
+    },
+    "befallen": {
+      "seconds": 1140,
+      "overrides": []
+    },
+    "beholder": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "blackburrow": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "burningwood": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "butcher": {
+      "seconds": 900,
+      "overrides": [
+        {
+          "name": "Guard Armandin",
+          "seconds": 1440,
+          "contains": true
+        },
+        {
+          "name": "Nyzil Bloodforge",
+          "seconds": 400,
+          "contains": false
+        }
+      ]
+    },
+    "cabeast": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "cabwest": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "cauldron": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "cazicthule": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "charasis": {
+      "seconds": 1230,
+      "overrides": []
+    },
+    "chardok": {
+      "seconds": 1080,
+      "overrides": [
+        {
+          "name": "Kennel Master Al`ele",
+          "seconds": 1200,
+          "contains": false
+        }
+      ]
+    },
+    "citymist": {
+      "seconds": 1320,
+      "overrides": [
+        {
+          "name": "a black reaver",
+          "seconds": 7200,
+          "contains": false
+        }
+      ]
+    },
+    "cobaltscar": {
+      "seconds": 1200,
+      "overrides": []
+    },
+    "commons": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "crushbone": {
+      "seconds": 540,
+      "overrides": []
+    },
+    "crystal": {
+      "seconds": 885,
+      "overrides": []
+    },
+    "dalnir": {
+      "seconds": 720,
+      "overrides": []
+    },
+    "dreadlands": {
+      "seconds": 400,
+      "overrides": [
+        {
+          "name": "A Tundra Yeti",
+          "seconds": 960,
+          "contains": false
+        }
+      ]
+    },
+    "droga": {
+      "seconds": 1230,
+      "overrides": []
+    },
+    "eastkarana": {
+      "seconds": 360,
+      "overrides": []
+    },
+    "eastwastes": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "ecommons": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "emeraldjungle": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "erudnext": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "erudnint": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "erudsxing": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "everfrost": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "fearplane": {
+      "seconds": 28800,
+      "overrides": []
+    },
+    "feerrott": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "felwithea": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "felwitheb": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "fieldofbone": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "firiona": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "freporte": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "freportn": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "freportw": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "frontiermtns": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "frozenshadow": {
+      "seconds": 1200,
+      "overrides": []
+    },
+    "gfaydark": {
+      "seconds": 425,
+      "overrides": [
+        {
+          "name": "Captain Silverwind",
+          "seconds": 1440,
+          "contains": false
+        }
+      ]
+    },
+    "greatdivide": {
+      "seconds": 640,
+      "overrides": []
+    },
+    "grobb": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "growthplane": {
+      "seconds": 43200,
+      "overrides": [
+        {
+          "name": "a protector of growth",
+          "seconds": 1440,
+          "contains": false
+        }
+      ]
+    },
+    "gukbottom": {
+      "seconds": 1680,
+      "overrides": []
+    },
+    "guktop": {
+      "seconds": 990,
+      "overrides": []
+    },
+    "halas": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "hateplane": {
+      "seconds": 28800,
+      "overrides": []
+    },
+    "highkeep": {
+      "seconds": 1080,
+      "overrides": [
+        {
+          "name": "Goblin",
+          "seconds": 600,
+          "contains": true
+        },
+        {
+          "name": "Guard Chopin",
+          "seconds": 180,
+          "contains": false
+        }
+      ]
+    },
+    "highpass": {
+      "seconds": 300,
+      "overrides": [
+        {
+          "name": "Vexven Mucktail",
+          "seconds": 1320,
+          "contains": false
+        }
+      ]
+    },
+    "hole": {
+      "seconds": 1290,
+      "overrides": []
+    },
+    "iceclad": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "innothule": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "kael": {
+      "seconds": 1680,
+      "overrides": []
+    },
+    "kaesora": {
+      "seconds": 1080,
+      "overrides": []
+    },
+    "kaladima": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "kaladimb": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "karnor": {
+      "seconds": 1620,
+      "overrides": []
+    },
+    "kedge": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "kerraridge": {
+      "seconds": 1065,
+      "overrides": []
+    },
+    "kithicor": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "kurn": {
+      "seconds": 1100,
+      "overrides": []
+    },
+    "lakeofillomen": {
+      "seconds": 400,
+      "overrides": [
+        {
+          "name": "a bloodgill goblin",
+          "seconds": 780,
+          "contains": false
+        }
+      ]
+    },
+    "lakerathe": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "lavastorm": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "lfaydark": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "mischiefplane": {
+      "seconds": 4210,
+      "overrides": []
+    },
+    "mistmoore": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "misty": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "najena": {
+      "seconds": 1140,
+      "overrides": []
+    },
+    "necropolis": {
+      "seconds": 1620,
+      "overrides": []
+    },
+    "nektulos": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "neriaka": {
+      "seconds": 1440,
+      "overrides": [
+        {
+          "name": "Jacker",
+          "seconds": 480,
+          "contains": false
+        }
+      ]
+    },
+    "neriakb": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "neriakc": {
+      "seconds": 1440,
+      "overrides": [
+        {
+          "name": "Nallar Q`Tentu",
+          "seconds": 400,
+          "contains": false
+        }
+      ]
+    },
+    "northkarana": {
+      "seconds": 360,
+      "overrides": []
+    },
+    "nro": {
+      "seconds": 400,
+      "overrides": [
+        {
+          "name": "Guard Fintran",
+          "seconds": 700,
+          "contains": false
+        }
+      ]
+    },
+    "nurga": {
+      "seconds": 1230,
+      "overrides": []
+    },
+    "oasis": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "oggok": {
+      "seconds": 1440,
+      "overrides": []
+    },
+    "oot": {
+      "seconds": 360,
+      "overrides": [
+        {
+          "name": "Guardian of K`Arnon",
+          "seconds": 1320,
+          "contains": false
+        }
+      ]
+    },
+    "overthere": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "paineel": {
+      "seconds": 630,
+      "overrides": [
+        {
+          "name": "Guard Ackin",
+          "seconds": 1500,
+          "contains": false
+        }
+      ]
+    },
+    "paw": {
+      "seconds": 1320,
+      "overrides": [
+        {
+          "name": "The Ishva Mal",
+          "seconds": 1680,
+          "contains": false
+        }
+      ]
+    },
+    "permafrost": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "qcat": {
+      "seconds": 720,
+      "overrides": []
+    },
+    "qey2hh1": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "qeynos": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "qeynos2": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "qeytoqrg": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "qrg": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "rathemtn": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "rivervale": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "runnyeye": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "sebilis": {
+      "seconds": 1620,
+      "overrides": [
+        {
+          "name": "Tolapumj",
+          "seconds": 9900,
+          "contains": false
+        }
+      ]
+    },
+    "sirens": {
+      "seconds": 1680,
+      "overrides": []
+    },
+    "skyfire": {
+      "seconds": 780,
+      "overrides": []
+    },
+    "skyshrine": {
+      "seconds": 1800,
+      "overrides": []
+    },
+    "sleeper": {
+      "seconds": 28800,
+      "overrides": []
+    },
+    "soldunga": {
+      "seconds": 1080,
+      "overrides": []
+    },
+    "soldungb": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "soltemple": {
+      "seconds": 300,
+      "overrides": []
+    },
+    "southkarana": {
+      "seconds": 360,
+      "overrides": [
+        {
+          "name": "High Shaman Phido",
+          "seconds": 1320,
+          "contains": false
+        }
+      ]
+    },
+    "sro": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "steamfont": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "stonebrunt": {
+      "seconds": 670,
+      "overrides": []
+    },
+    "swampofnohope": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "templeveeshan": {
+      "seconds": 4400,
+      "overrides": [
+        {
+          "name": "A crimson claw hatchling",
+          "seconds": 360,
+          "contains": false
+        }
+      ]
+    },
+    "thurgadina": {
+      "seconds": 420,
+      "overrides": []
+    },
+    "thurgadinb": {
+      "seconds": 420,
+      "overrides": []
+    },
+    "timorous": {
+      "seconds": 720,
+      "overrides": []
+    },
+    "tox": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "trakanon": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "unrest": {
+      "seconds": 1320,
+      "overrides": []
+    },
+    "veeshan": {
+      "seconds": 4320,
+      "overrides": []
+    },
+    "velketor": {
+      "seconds": 1970,
+      "overrides": []
+    },
+    "wakening": {
+      "seconds": 400,
+      "overrides": [
+        {
+          "name": "A storm giant surveyor",
+          "seconds": 420,
+          "contains": false
+        }
+      ]
+    },
+    "warrens": {
+      "seconds": 400,
+      "overrides": [
+        {
+          "name": "King Gragnar",
+          "seconds": 2880,
+          "contains": false
+        }
+      ]
+    },
+    "warslikswood": {
+      "seconds": 400,
+      "overrides": []
+    },
+    "westwastes": {
+      "seconds": 400,
+      "overrides": [
+        {
+          "name": "An elder wyvern",
+          "seconds": 1800,
+          "contains": false
+        }
+      ]
+    }
+  }
+}

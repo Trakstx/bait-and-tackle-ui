@@ -15,7 +15,7 @@ Copyright 2014 Patrick Mours. The distribution includes ReShade's redistribution
 
 ## CPython and Tcl/Tk
 
-The release bundles a private CPython 3.12 runtime. Its PSF license and incorporated notices are in `payload/BFT_HUD/runtime/LICENSE.txt`. Tcl/Tk notices accompany `runtime/tcl/`. Preserve these files when redistributing the package.
+The release bundles a private CPython 3.14.10 runtime. Its PSF license and incorporated notices are in `payload/BFT_HUD/runtime/LICENSE.txt`. Tcl/Tk notices are retained in the PSF license bundle and Tcl/Tk library archives under `runtime/tcl/`. Preserve these files when redistributing the package.
 
 ## CH-chain references
 
@@ -23,3 +23,11 @@ CCHPM and EQTool were researched as behavior/format references. Their source cod
 
 - https://github.com/Dgc2002/CCHPM
 - https://github.com/smasherprog/EqTool/blob/main/README.md
+
+## Native toolchain runtime
+
+The native targets use w64devkit 2.10.0 with static MinGW/GCC runtime linking. Preserve the accompanying MinGW-w64 runtime notice. GCC runtime use is subject to the GCC Runtime Library Exception (version 3.1) and its underlying license; see https://www.gnu.org/licenses/gcc-exception-3.1.html. The compiler is a build-time input, not an installed application.
+
+## Optional recorder
+
+OBS Studio 33.0.1 is an optional hash-pinned download, not bundled in the candidate archive. OBS and its plugins retain their upstream license notices in the downloaded distribution. See https://github.com/obsproject/obs-studio and its COPYING file. Source and build notices for BFT do not replace OBS licensing.

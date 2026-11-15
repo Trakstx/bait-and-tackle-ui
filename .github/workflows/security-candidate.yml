@@ -1,0 +1,76 @@
+name: Security candidate build
+on:
+  workflow_dispatch:
+  push:
+    branches: [security/harden-startup-builds]
+  pull_request:
+    paths: ['src/**', 'tools/**', 'tests/security/**', '.github/workflows/security-candidate.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    runs-on: windows-2022
+    timeout-minutes: 25
+    env:
+      BFT_VISION_FIXTURE: build/inputs/vision.zip
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.14'
+      - name: Fetch and verify pinned inputs
+        run: python tools/fetch_build_inputs.py --output build/inputs
+      - name: Build patched private Python and Tk runtime
+        run: python tools/build_runtime.py --cache build/runtime-inputs --output build/runtime
+      - name: Build twice and compare every custom binary
+        shell: pwsh
+        run: |
+          $compiler = 'build/inputs/compiler/w64devkit/bin/i686-w64-mingw32-g++.exe'
+          $sdk = 'build/inputs/sdk/reshade-18deaa52de0c425a78b329e9cb3c497281cd00ec/include'
+          python tools/build_native.py --compiler $compiler --sdk $sdk --output build/native-a
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tools/build_native.py --compiler $compiler --sdk $sdk --output build/native-b
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -c "import json; from pathlib import Path; a=json.loads(Path('build/native-a/native-build.json').read_text()); b=json.loads(Path('build/native-b/native-build.json').read_text()); assert a['binaries']==b['binaries'], 'Native builds differ'"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $compiler -std=c++17 -m32 src/native-and-tests/test_paths.cpp -static -o build/test_paths.exe -lshell32 -lole32 -luuid
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & build/test_paths.exe
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Attest native binaries to this workflow and commit
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45
+        with:
+          subject-path: build/native-a/*
+      - name: Verify native autostart using an inert fake EQ host
+        run: python tools/test_native_bootstrap.py --compiler build/inputs/compiler/w64devkit/bin/i686-w64-mingw32-g++.exe --scratch build/bootstrap-test
+      - name: Security and lifecycle regressions
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .test-tmp | Out-Null
+          python -B -m unittest discover -s tests/security -v
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node tools/test_import_state.js
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Compose and verify isolated runtime
+        shell: pwsh
+        run: |
+          python tools/package_candidate.py --seed build/inputs/vendor-seed.zip --native build/native-a --output build/package --runtime build/runtime
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & build/package/Bait-and-Tackle/payload/BFT_HUD/runtime/python.exe -B -m unittest discover -s tests/security -q
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tools/verify_runtime.py --hud build/package/Bait-and-Tackle/payload/BFT_HUD
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & build/package/Bait-and-Tackle/payload/BFT_HUD/runtime/python.exe -B build/package/Bait-and-Tackle/install.py --verify
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -c "from pathlib import Path; import json; Path('build/package/Bait-and-Tackle/source-commit.json').write_text(json.dumps({'commit': '${{ github.sha }}', 'run': '${{ github.run_id }}'}))"
+      - name: Upload candidate and build receipts (never publish a release)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Bait-and-Tackle-security-candidate
+          path: build/package/Bait-and-Tackle/
+          retention-days: 14

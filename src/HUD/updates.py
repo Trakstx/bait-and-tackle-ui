@@ -1,7 +1,8 @@
 """Explicit GitHub release checks; no background telemetry or automatic installation."""
-import hashlib,json,os,re,threading,urllib.request,zipfile
+import hashlib,json,os,re,threading,urllib.request,zipfile,uuid
 from pathlib import Path
-VERSION="0.7.0"
+RELEASE_VERSION="0.7.1"
+VERSION=RELEASE_VERSION+"-candidate"
 REPO="Trakstx/bait-and-tackle-ui"
 ROOT="https://github.com/"+REPO
 class Updates:
@@ -14,7 +15,7 @@ class Updates:
   with self.lock:
    if self.state["status"] in ("checking","downloading"):raise ValueError("An update operation is already running")
    if action=="download" and not self.release:raise ValueError("Check for updates first")
-   self.state.update(status="checking" if action=="check" else "downloading",message="Contacting GitHub…" if action=="check" else "Downloading and verifying package…")
+   self.state.update(status="checking" if action=="check" else "downloading",message="Contacting GitHubâ€¦" if action=="check" else "Downloading and verifying packageâ€¦")
   threading.Thread(target=self.work,args=(action,),daemon=True).start();return self.snapshot()
  def get(self,url,limit):
   req=urllib.request.Request(url,headers={"User-Agent":"BaitAndTackle/"+VERSION,"Accept":"application/vnd.github+json"})
@@ -28,7 +29,7 @@ class Updates:
     r=json.loads(self.get("https://api.github.com/repos/"+REPO+"/releases/latest",1024*1024));v=r["tag_name"].removeprefix("v")
     if not re.fullmatch(r"\d+\.\d+\.\d+",v):raise ValueError("Unsupported release version")
     assets={a["name"]:a for a in r["assets"]};name="Bait-and-Tackle-v"+v+".zip"
-    newer=tuple(map(int,v.split(".")))>tuple(map(int,VERSION.split(".")))
+    newer=tuple(map(int,v.split(".")))>tuple(map(int,RELEASE_VERSION.split(".")))
     self.release=(v,name,assets) if newer and name in assets and "SHA256SUMS.txt" in assets else None
     result={"status":"available" if self.release else "current","latest":v,"message":("Version "+v+" is available.") if self.release else "No newer installable release is available.","release_url":ROOT+"/releases/tag/v"+v}
    else:
@@ -44,7 +45,7 @@ class Updates:
     if not expected or not re.fullmatch("[a-fA-F0-9]{64}",expected):raise ValueError("Release checksum is missing")
     data=asset(name)
     if hashlib.sha256(data).hexdigest().lower()!=expected.lower():raise ValueError("Release checksum mismatch")
-    folder=Path(os.environ.get("LOCALAPPDATA",str(Path.home())))/"BaitAndTackle"/"updates"/v;folder.mkdir(parents=True,exist_ok=True)
+    folder=Path(os.environ.get("LOCALAPPDATA",str(Path.home())))/"BaitAndTackle"/"updates"/(v+"-"+uuid.uuid4().hex);folder.mkdir(parents=True,exist_ok=True)
     archive=folder/name;archive.write_bytes(data)
     with zipfile.ZipFile(archive) as z:
      if sum(i.file_size for i in z.infolist())>1024*1024*1024:raise ValueError("Expanded package too large")

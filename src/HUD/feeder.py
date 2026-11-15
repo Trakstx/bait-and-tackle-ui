@@ -33,6 +33,8 @@ def publish(memory, generation, dps, damage, seconds, demo, stats=None, target="
 
 
 def main():
+    from privileges import require_standard_user
+    require_standard_user()
     parser = argparse.ArgumentParser()
     parser.add_argument("--demo", action="store_true")
     parser.add_argument("--log", default=None)

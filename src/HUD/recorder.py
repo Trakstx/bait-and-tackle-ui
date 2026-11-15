@@ -8,33 +8,69 @@ BASE=Path(__file__).resolve().parent
 RUNTIME=Path(os.environ.get('LOCALAPPDATA',str(Path.home())))/'BaitAndTackle/recorder'
 
 def validate(data=None):
- d=data or {};folder=str(d.get('folder',str(Path.home()/'Videos/BaitAndTackle'))).strip()
- if not Path(folder).is_absolute() or folder.startswith(('\\\\','//')) or '\n' in folder or '\r' in folder:raise ValueError('Choose an absolute local folder for saved incidents.')
+ d=data or {}
+ if not isinstance(d.get('enabled',False),bool):raise ValueError('Recording enablement must be true or false.')
+ folder=str(d.get('folder',str(Path.home()/'Videos/BaitAndTackle'))).strip()
+ from local_paths import local_folder
+ folder=str(local_folder(folder))
  return {'enabled':bool(d.get('enabled',False)),'folder':folder,'seconds':300,'fps':15,'bitrate':3000,'audio_bitrate':96}
 
-def engine_path():return BASE/'recorder-engine/bin/64bit/obs64.exe'
+def engine_path():
+ key=hashlib.sha256(str(BASE.resolve()).casefold().encode()).hexdigest()[:20]
+ return RUNTIME/key/('engine-'+VERSION)/'bin/64bit/obs64.exe'
 
 def install_engine(report=lambda s:None):
- exe=engine_path()
- if exe.is_file():return exe
- report('Downloading official portable recorder engine (one-time, about 224 MB).');RUNTIME.mkdir(parents=True,exist_ok=True);archive=RUNTIME/'obs-download.zip'
- req=urllib.request.Request(URL,headers={'User-Agent':'BaitAndTackle-recorder/1.0'})
- digest=hashlib.sha256();size=0
- with urllib.request.urlopen(req,timeout=30) as response,archive.open('wb') as out:
-  while True:
-   chunk=response.read(1024*1024)
-   if not chunk:break
-   size+=len(chunk)
-   if size>350*1024*1024:raise ValueError('Recorder download exceeded its size limit.')
-   digest.update(chunk);out.write(chunk)
- if digest.hexdigest()!=SHA256:raise ValueError('Recorder download checksum did not match the pinned official release.')
- report('Installing isolated recorder engine.');root=BASE/'recorder-engine';root.mkdir(exist_ok=True)
+ exe=engine_path();root=exe.parents[2];RUNTIME.mkdir(parents=True,exist_ok=True)
+ archive=RUNTIME/('obs-'+SHA256+'.zip')
+ def hash_file(path):
+  digest=hashlib.sha256()
+  with path.open('rb') as source:
+   while chunk:=source.read(1024*1024):digest.update(chunk)
+  return digest.hexdigest()
+ if not archive.exists() or hash_file(archive)!=SHA256:
+  report('Downloading verified official recorder engine (about 224 MB).')
+  import tempfile
+  fd,temp=tempfile.mkstemp(prefix='obs-download-',dir=RUNTIME);os.close(fd);temp=Path(temp)
+  try:
+   req=urllib.request.Request(URL,headers={'User-Agent':'BaitAndTackle-recorder/1.0'});digest=hashlib.sha256();size=0
+   with urllib.request.urlopen(req,timeout=30) as response,temp.open('wb') as out:
+    while chunk:=response.read(1024*1024):
+     size+=len(chunk)
+     if size>350*1024*1024:raise ValueError('Recorder download exceeded its size limit.')
+     digest.update(chunk);out.write(chunk)
+   if digest.hexdigest()!=SHA256:raise ValueError('Recorder download checksum mismatch.')
+   temp.replace(archive)
+  finally:
+   if temp.exists():temp.unlink()
  with zipfile.ZipFile(archive) as z:
-  for item in z.infolist():
-   target=(root/item.filename).resolve()
-   if not target.is_relative_to(root.resolve()):raise ValueError('Unsafe recorder archive path.')
-  z.extractall(root)
- archive.unlink();return exe
+  entries=[i for i in z.infolist() if not i.is_dir()]
+  if len(entries)>10000 or sum(i.file_size for i in entries)>2*1024**3:raise ValueError('Unexpected recorder archive size.')
+  for item in entries:
+   if '\\' in item.filename or ':' in item.filename or item.filename.startswith('/') or '..' in Path(item.filename).parts:raise ValueError('Unsafe recorder archive path.')
+   if (item.external_attr>>16)&0o170000==0o120000:raise ValueError('Archive links are not allowed.')
+  if not exe.exists():
+   report('Installing verified recorder engine into the user cache.')
+   import tempfile
+   with tempfile.TemporaryDirectory(prefix='obs-stage-',dir=RUNTIME) as staging:
+    stage=Path(staging)/'engine';stage.mkdir();z.extractall(stage)
+    if root.exists():raise ValueError('Incomplete recorder cache found. Rename its engine folder while stopped, then retry; saved clips are separate.')
+    root.parent.mkdir(parents=True,exist_ok=True);stage.replace(root)
+  report('Checking cached recorder files against the pinned official archive.')
+  expected=set()
+  for item in entries:
+   relative=Path(item.filename);target=root/relative
+   from local_paths import local_folder
+   local_folder(target.parent)
+   expected.add(relative.as_posix().casefold())
+   if target.is_symlink() or not target.is_file():raise ValueError('Recorder runtime is missing or linked: '+item.filename)
+   with z.open(item) as source:
+    digest=hashlib.sha256()
+    while chunk:=source.read(1024*1024):digest.update(chunk)
+   if hash_file(target)!=digest.hexdigest():raise ValueError('Recorder cache was modified: '+item.filename+'. Restore the verified engine before starting.')
+  for target in root.rglob('*'):
+   if target.is_file() and target.suffix.lower() in ('.exe','.dll','.pyd','.lua','.py') and target.relative_to(root).as_posix().casefold() not in expected:
+    raise ValueError('Unexpected executable/script in recorder cache: '+target.name)
+ return exe
 
 def encoder():
  try:
@@ -52,7 +88,8 @@ def encoder():
  return 'obs_x264'
 
 def prepare(config,root,ipc,width=1680,height=1050):
- config=validate(config);root=Path(root);ipc=Path(ipc);ipc.mkdir(parents=True,exist_ok=True);folder=Path(config['folder']);folder.mkdir(parents=True,exist_ok=True)
+ from local_paths import local_folder
+ config=validate(config);root=Path(root);ipc=Path(ipc);ipc.mkdir(parents=True,exist_ok=True);folder=local_folder(config['folder']);folder.mkdir(parents=True,exist_ok=True)
  if shutil.disk_usage(folder).free<512*1024*1024:raise ValueError('Keep at least 512 MB free in the incident folder.')
  base=root/'config/obs-studio';profile=base/'basic/profiles/BFT';scenes=base/'basic/scenes';profile.mkdir(parents=True,exist_ok=True);scenes.mkdir(parents=True,exist_ok=True)
  (root/'portable_mode.txt').write_text('')
@@ -176,10 +213,13 @@ class Recorder:
    elif time.time()-self.launch_at>20:self.message('Recorder initialized, but replay is not active. Check the isolated OBS log.')
    clip=lines[2]
    if clip and clip!=self.seen_clip:
-    file=Path(clip).resolve();folder=Path(self.config['folder']).resolve()
-    if file.is_relative_to(folder) and file.is_file():
+    from local_paths import local_folder
+    file=Path(clip);folder=local_folder(self.config['folder']);parent=local_folder(file.parent)
+    import stat
+    if parent==folder and file.name.startswith('Incident BFT-') and file.suffix.lower()=='.mkv' and not (getattr(file.lstat(),'st_file_attributes',0)&stat.FILE_ATTRIBUTE_REPARSE_POINT) and file.is_file():
      self.seen_clip=clip;self.state['last_clip']=str(file);self.pending_save=None
-     note=file.with_suffix('.json');note.write_text(json.dumps({'saved_at':time.time(),'capture':'EverQuest window + EQ process audio','microphone':False,'rolling_seconds':300,'file':file.name},indent=2))
+     from file_transaction import write_atomic
+     note=file.with_suffix('.json');write_atomic(note,json.dumps({'saved_at':time.time(),'capture':'EverQuest window + EQ process audio','microphone':False,'rolling_seconds':300,'file':file.name},indent=2).encode('utf8'))
      self.message('Incident saved. This clip will not be automatically deleted.')
   except (OSError,ValueError):pass
   if self.pending_save and time.time()-self.pending_save>30:self.pending_save=None;self.message('Save did not complete within 30 seconds. Check free disk space and recorder log.')
@@ -196,9 +236,13 @@ class Recorder:
   self.stop()
  def snapshot(self):
   with self.lock:
-   clips=[];folder=Path(self.config['folder'])
+   clips=[]
    try:
-    for f in sorted(folder.glob('Incident BFT-*.mkv'),key=lambda p:p.stat().st_mtime,reverse=True)[:30]:clips.append({'name':f.name,'bytes':f.stat().st_size,'saved':f.stat().st_mtime})
-   except OSError:pass
+    from local_paths import local_folder
+    folder=local_folder(self.config['folder'])
+    import stat
+    safe=[f for f in folder.glob('Incident BFT-*.mkv') if not (getattr(f.lstat(),'st_file_attributes',0)&stat.FILE_ATTRIBUTE_REPARSE_POINT)]
+    for f in sorted(safe,key=lambda p:p.lstat().st_mtime,reverse=True)[:30]:clips.append({'name':f.name,'bytes':f.stat().st_size,'saved':f.stat().st_mtime})
+   except (OSError,ValueError):pass
    return dict(self.state,settings=dict(self.config),buffer_seconds=min(300,int(time.time()-self.started)) if self.started and self.state['active'] else 0,saving=bool(self.pending_save),clips=clips,engine_installed=engine_path().is_file())
  def close(self):self.closed=True;self.thread.join(timeout=8)

@@ -179,6 +179,7 @@ class LayoutService:
    results=self.read('results.json',[]);remaining=[];completed=[]
    for item in pending:
     try:
+     if not re.fullmatch(r'[a-f0-9]{32}',str(item.get('id',''))):raise ValueError('Invalid queued operation ID.')
      layout=self.source(item['source_kind'],item['source']);targets=item['targets'];hotkeys=self.hotkeys(item['source_kind'],item['source']) if item.get('include_hotkeys') else None
      if item['template_name'] and any(t['name'].casefold()==item['template_name'].casefold() and t['id']!=item['id'] for t in self.read('templates.json',[])):raise ValueError('Template name already exists.')
      # Validate every target before beginning this operation.
@@ -187,25 +188,23 @@ class LayoutService:
       for path in paths:
        charpath=path.with_name(path.name[3:])
        if charpath.is_symlink() or charpath.resolve().parent!=self.game.resolve():raise ValueError('Invalid target hotkey file.')
-     backup=self.directory/'backups'/item['id'];backup.mkdir(parents=True,exist_ok=True)
+     from file_transaction import FileTransaction
+     recovery=self.directory/'recovery';FileTransaction.recover_pending(recovery,[self.game,self.directory])
+     transaction=FileTransaction(recovery,[self.game,self.directory])
+     backup=transaction.directory
      for path in paths:
       text,encoding=read_text(path);new=merge_geometry(text,layout)
       if new!=text:
-       saved=backup/path.name
-       if not saved.exists():saved.write_bytes(path.read_bytes())
-       temporary=path.with_suffix('.bft-position.tmp');temporary.write_bytes(new.encode(encoding));temporary.replace(path)
+       transaction.add(path,new.encode(encoding))
       if hotkeys:
        charpath=path.with_name(path.name[3:]);old,codec=read_text(charpath) if charpath.exists() else ('','utf-8');updated=merge_hotkeys(old,hotkeys)
-       saved=backup/charpath.name
-       if not saved.exists():
-        if charpath.exists():saved.write_bytes(charpath.read_bytes())
-        else:(backup/(charpath.name+'.not-present')).write_text('Target character file did not exist before this copy.')
-       temp=charpath.with_suffix('.bft-hotkeys.tmp');temp.write_bytes(updated.encode(codec));temp.replace(charpath)
+       if updated!=old:transaction.add(charpath,updated.encode(codec))
      if item['template_name']:
       templates=self.read('templates.json',[])
       if not any(t['id']==item['id'] for t in templates):
        if any(t['name'].casefold()==item['template_name'].casefold() for t in templates):raise ValueError('Template name already exists.')
-       templates.append({'id':item['id'],'name':item['template_name'],'created_at':time.time(),'source':item['source'],'layout':layout,'hotkeys':hotkeys});self.write('templates.json',templates)
+       templates.append({'id':item['id'],'name':item['template_name'],'created_at':time.time(),'source':item['source'],'layout':layout,'hotkeys':hotkeys});transaction.add(self.directory/'templates.json',json.dumps(templates,indent=2).encode('utf8'))
+     transaction.commit()
      result={'id':item['id'],'ok':True,'targets':targets,'template_name':item['template_name'],'at':time.time(),'backup':str(backup)};completed.append(result)
     except (OSError,ValueError,KeyError,TypeError,UnicodeError) as exc:
      result={'id':item.get('id',''),'ok':False,'error':str(exc),'at':time.time()};remaining.append(item)

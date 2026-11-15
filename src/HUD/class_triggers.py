@@ -10,15 +10,15 @@ CASTERS=[c for c in P99_CLASSES if c not in ['warrior','monk','rogue']]
 def preset(key,name,patterns,message,classes=(),severity='warn',duration=0,cooldown=3):
  return {'id':'preset:'+key,'name':name,'patterns':patterns,'mode':'wildcard','message':message,'classes':list(classes),'severity':severity,'duration_seconds':duration,'cooldown_seconds':cooldown,'sound':severity=='danger','enabled':True,'builtin':True}
 PRESETS=[
- preset('enrage','Enrage',['* has become ENRAGED.','* has become ENRAGED!'],'ENRAGE — stop frontal melee',severity='danger'),
- preset('gating','NPC gating',['* begins to cast the gate spell.'],'NPC GATING — interrupt if able',cooldown=5),
+ preset('enrage','Enrage',['* has become ENRAGED.','* has become ENRAGED!'],'ENRAGE â€” stop frontal melee',severity='danger'),
+ preset('gating','NPC gating',['* begins to cast the gate spell.'],'NPC GATING â€” interrupt if able',cooldown=5),
  preset('invis','Invisibility fading',['You feel yourself starting to appear.'],'INVISIBILITY FADING',severity='danger'),
  preset('death','Character death',['You have been slain by *!','You died.'],'YOU HAVE DIED',severity='danger'),
  preset('fizzle','Spell fizzle',['Your spell fizzles!'],'SPELL FIZZLED',CASTERS,severity='info',cooldown=2),
  preset('interrupted','Spell interrupted',['Your spell is interrupted.'],'CAST INTERRUPTED',CASTERS),
  preset('mana','Out of mana',['Insufficient Mana to cast this spell!'],'NOT ENOUGH MANA',CASTERS,cooldown=5),
  preset('resist','Target resisted',['Your target resisted the * spell.','Your target resisted the * spell!'],'SPELL RESISTED',CASTERS,cooldown=2),
- preset('charm','Charm break',['Your charm spell has worn off.'],'CHARM BROKE — control your pet',['enchanter','druid','necromancer','bard'],severity='danger'),
+ preset('charm','Charm break',['Your charm spell has worn off.'],'CHARM BROKE â€” control your pet',['enchanter','druid','necromancer','bard'],severity='danger'),
  preset('feign','Failed feign death',['{character} has fallen to the ground.','You have fallen to the ground.'],'FEIGN DEATH FAILED',['monk','necromancer','shadow knight'],severity='danger'),
  preset('song','Song interrupted',['Your song is interrupted.','You miss a note, bringing your song to a close!'],'SONG INTERRUPTED',['bard']),
  preset('hide','Hide failed',['You failed to hide yourself!'],'HIDE FAILED',['rogue','ranger','shadow knight','bard'],cooldown=2),
@@ -42,14 +42,16 @@ def validate_rule(row):
  return {'id':key,'name':name,'pattern':pattern,'message':message,'mode':mode,'severity':severity,'classes':list(dict.fromkeys(classes)), 'enabled':bool(row.get('enabled',True)),'sound':bool(row.get('sound',False)), 'duration_seconds':number(row.get('duration_seconds',0),0,3600,'Timer duration'),'cooldown_seconds':number(row.get('cooldown_seconds',3),0,300,'Repeat cooldown'),'builtin':False}
 
 def validate(data=None):
- c=dict(enabled=True,sound_enabled=False,move_mode=False,x=500,y=160,width=420,rows=4,class_overrides={},preset_overrides={},custom=[]);c.update(data or {})
+ c=dict(invulnerability_enabled=True,invulnerability_sources={},enabled=True,sound_enabled=False,move_mode=False,x=500,y=160,width=420,rows=4,class_overrides={},preset_overrides={},custom=[]);c.update(data or {})
+ sources=c['invulnerability_sources']
+ if not isinstance(sources,dict) or len(sources)>200 or any(not re.fullmatch(r'[a-f0-9]{64}',k) or v not in ('auto','spell','item') for k,v in sources.items()):raise ValueError('Invalid invulnerability source override.')
  overrides=c['class_overrides'];preset_overrides=c['preset_overrides'];custom=c['custom']
  if not isinstance(overrides,dict) or len(overrides)>200 or any(not re.fullmatch(r'[a-f0-9]{64}',k) or v not in P99_CLASSES for k,v in overrides.items()):raise ValueError('Invalid character class override.')
  if not isinstance(preset_overrides,dict) or any(k not in PRESET_IDS or not isinstance(v,bool) for k,v in preset_overrides.items()):raise ValueError('Invalid preset selection.')
  if not isinstance(custom,list) or len(custom)>100:raise ValueError('Use up to 100 custom triggers.')
  rules=[validate_rule(row) for row in custom]
  if len({r['id'] for r in rules})!=len(rules):raise ValueError('Custom trigger IDs must be unique.')
- return {'enabled':bool(c['enabled']),'sound_enabled':bool(c['sound_enabled']),'speech_style':'natural','speech_voice':str(c.get('speech_voice',''))[:200],'audio_mode':str(c.get('audio_mode','speech')) if c.get('audio_mode','speech') in ('speech','beep') else 'speech','speech_volume':int(number(c.get('speech_volume',80),0,100,'Speech volume')),'speech_rate':int(number(c.get('speech_rate',0),-10,10,'Speech rate')),'move_mode':bool(c['move_mode']), 'x':int(number(c['x'],0,16384,'Panel X')),'y':int(number(c['y'],0,16384,'Panel Y')),'width':int(number(c['width'],240,800,'Panel width')),'rows':int(number(c['rows'],1,8,'Visible alerts')),'class_overrides':dict(overrides),'preset_overrides':dict(preset_overrides),'custom':rules}
+ return {'invulnerability_enabled':bool(c['invulnerability_enabled']),'invulnerability_sources':dict(sources),'enabled':bool(c['enabled']),'sound_enabled':bool(c['sound_enabled']),'speech_style':'natural','speech_voice':str(c.get('speech_voice',''))[:200],'audio_mode':str(c.get('audio_mode','speech')) if c.get('audio_mode','speech') in ('speech','beep') else 'speech','speech_volume':int(number(c.get('speech_volume',80),0,100,'Speech volume')),'speech_rate':int(number(c.get('speech_rate',0),-10,10,'Speech rate')),'move_mode':bool(c['move_mode']), 'x':int(number(c['x'],0,16384,'Panel X')),'y':int(number(c['y'],0,16384,'Panel Y')),'width':int(number(c['width'],240,800,'Panel width')),'rows':int(number(c['rows'],1,8,'Visible alerts')),'class_overrides':dict(overrides),'preset_overrides':dict(preset_overrides),'custom':rules}
 
 def render(text,character,kind,line):
  return text.replace('{character}',character).replace('{class}',kind or 'Unknown class').replace('{line}',line)[:220]
@@ -65,6 +67,10 @@ def matches(rule,text,character):
 
 class TriggerEngine:
  def __init__(self,config=None,profile_dir=None):
+  from warrior_defensive import Defensive
+  self.defensive=Defensive()
+  from self_invulnerability import SelfInvulnerability
+  self.invulnerability=SelfInvulnerability()
   self.lock=threading.RLock();self.profile_dir=Path(profile_dir) if profile_dir else None;self.config=validate(config);self.character='Waiting for login';self.server='';self.profile_key='';self.detected=None;self.level=None;self.active=[];self.last_fire={};self.recent=deque(maxlen=30);self.sound_pending=False;self.audio_pending=deque(maxlen=4);self.zone='';self._class=None
  def configure(self,config):
   with self.lock:
@@ -88,6 +94,10 @@ class TriggerEngine:
  def set_character(self,path):
   path=Path(path)
   with self.lock:
+   from warrior_defensive import Defensive
+   self.defensive=Defensive()
+   from self_invulnerability import SelfInvulnerability
+   self.invulnerability=SelfInvulnerability()
    self.character,self.server=identity(path);self.profile_key=hashlib.sha256(str(path.resolve()).casefold().encode()).hexdigest();self.detected=None;self.level=None;self.active.clear();self.last_fire.clear();self.audio_pending.clear();self.recent.clear();self.sound_pending=False;self.audio_pending=deque(maxlen=4);self.zone=''
    saved=self.profile_path()
    if saved:
@@ -120,8 +130,12 @@ class TriggerEngine:
   if len(text)>4096:return
   with self.lock:
    if self.learn(text):return
+   if self.config['enabled'] and self.config['invulnerability_enabled']:self.invulnerability.consume(text,min(now,when) if stamp else now,self.current_class(),self.config['invulnerability_sources'].get(self.profile_key,'auto'))
    if text.startswith(('LOADING, PLEASE WAIT','Welcome to EverQuest!')):self.active.clear();self.last_fire.clear();self.audio_pending.clear();self.sound_pending=False;self.audio_pending=deque(maxlen=4);return
    if not self.config['enabled']:return
+   if self.current_class()=='warrior':
+    notice=self.defensive.consume(text,now,self.level)
+    if notice and self.config['sound_enabled']:self.audio_pending.append(dict(text=notice,severity='warn'))
    for rule in self.rules():
     if self.eligible(rule) and matches(rule,text,self.character) and now-self.last_fire.get(rule['id'],-1e30)>=rule['cooldown_seconds']:
      self.last_fire[rule['id']]=now;self.fire(rule,text,now)
@@ -142,4 +156,15 @@ class TriggerEngine:
  def snapshot(self,now):
   with self.lock:
    self.active=[r for r in self.active if r['ends']>now];kind=self.current_class()
-   return {'character':self.character,'server':self.server,'profile_key':self.profile_key,'class':kind,'detected_class':self.detected,'level':self.level,'class_source':'Manual override' if self.profile_key in self.config['class_overrides'] else 'Own /who log record' if self.detected else 'Unknown — run /who or choose a class override','alerts':[dict(r,remaining=max(0,r['ends']-now)) for r in reversed(self.active)],'recent':list(self.recent),'presets':[dict(r,eligible=self.eligible(r)) for r in self.rules() if r.get('builtin')],'classes':P99_CLASSES}
+   invulnerable_rows=[];invulnerable_reuse=[]
+   if self.config['enabled'] and self.config['invulnerability_enabled']:
+    notices=self.invulnerability.tick(now)
+    if self.config['sound_enabled']:
+     for notice in notices:self.audio_pending.append(dict(text=notice,severity='danger'))
+    invulnerable_rows,invulnerable_reuse=self.invulnerability.rows(now)
+   defensive_rows=[]
+   if kind=='warrior' and self.config['enabled'] and (self.level is None or self.level>=55):
+    notice=self.defensive.tick(now)
+    if notice and self.config['sound_enabled']:self.audio_pending.append(dict(text=notice,severity='warn'))
+    defensive_rows=[self.defensive.row(now)]
+   return {'character':self.character,'server':self.server,'profile_key':self.profile_key,'class':kind,'detected_class':self.detected,'level':self.level,'class_source':'Manual override' if self.profile_key in self.config['class_overrides'] else 'Own /who log record' if self.detected else 'Unknown â€” run /who or choose a class override','alerts':invulnerable_rows+defensive_rows+[dict(r,remaining=max(0,r['ends']-now)) for r in reversed(self.active)]+invulnerable_reuse,'recent':list(self.recent),'presets':[dict(r,eligible=self.eligible(r)) for r in self.rules() if r.get('builtin')],'classes':P99_CLASSES}

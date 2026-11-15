@@ -96,7 +96,8 @@ def stop_helpers(overlay_pid,base,game_pid):
 def log(text):
  try:
   from datetime import datetime
-  path=Path(__file__).resolve().parent/'refresh-diagnostics.log'
+  from runtime_paths import install_state
+  path=install_state(Path(__file__).parent)/'refresh-diagnostics.log'
   with path.open('a',encoding='utf-8') as output:output.write(datetime.now().isoformat()+' '+str(text)+'\n')
  except OSError:pass
 
@@ -125,10 +126,8 @@ def refresh(base):
 
 def main():
  base=Path(__file__).resolve().parent
- if not ctypes.windll.shell32.IsUserAnAdmin():
-  result=ctypes.windll.shell32.ShellExecuteW(None,'runas',str(base/'runtime/pythonw.exe'),subprocess.list2cmdline([str(Path(__file__).resolve())]),str(base),0)
-  if result<=32:raise RuntimeError('Windows did not authorize refreshing the BFT helpers.')
-  return
+ from privileges import require_standard_user
+ require_standard_user()
  log('starting with python='+sys.executable+' elevated='+str(bool(ctypes.windll.shell32.IsUserAnAdmin())))
  refresh(base)
 if __name__=='__main__':

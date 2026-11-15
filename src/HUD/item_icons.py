@@ -31,6 +31,8 @@ class ItemIcons:
             except (OSError,ValueError,KeyError,TypeError):pass
             def fetch(url,limit):
                 request=urllib.request.Request(url,headers={'User-Agent':'BaitAndTackle/0.7 (user-requested item artwork)'})
+                from network_policy import require
+                require('artwork')
                 with urllib.request.urlopen(request,timeout=12) as response:
                     if response.geturl().split('/')[2] not in ('lucy.allakhazam.com','everquest.allakhazam.com'):raise ValueError('Unexpected artwork redirect')
                     body=response.read(limit+1)

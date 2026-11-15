@@ -76,6 +76,10 @@ class Overlay:
         self.buff_overlay = BuffOverlay(self.root,self.win,args.game)
         self.hub = Hub(game=args.game)
         self.hub.buff_engine = self.buffs
+        from klandicar import Encounter
+        from encounter_strip import EncounterStrip
+        self.encounter=Encounter(settings_store.load()['klandicar']);self.hub.encounter=self.encounter
+        self.encounter_strip=EncounterStrip(self.root,self.win)
         self.speech=self.hub.speech
         from class_triggers import TriggerEngine
         from trigger_overlay import TriggerOverlay
@@ -180,6 +184,8 @@ class Overlay:
                     self.last_check = mono
                     prefs = self.load()
                     shared_settings=settings_store.load()
+                    self.encounter.yelinak.role=self.triggers.current_class()
+                    self.encounter.configure(shared_settings['klandicar'])
                     self.triggers.configure(shared_settings['triggers'])
                     self.timers.configure(shared_settings['timers'])
                     self.misc=shared_settings['misc']
@@ -190,6 +196,7 @@ class Overlay:
                         name, server = identity(self.follower.path); self.character = name+' ['+server+']'
                         self.xp_replayed_to=self.experience.set_character(self.follower.path,now)
                         self.triggers.set_character(self.follower.path)
+                        self.encounter.set_character(name+' ['+server+']')
                         self.timers.set_character(name,server)
                         self.maps.set_character(name,self.follower.path)
                         # Restore zone context only; historical lines never start timers.
@@ -211,6 +218,7 @@ class Overlay:
                     if self.follower.stream.tell()>self.buff_replayed_to:
                         self.triggers.consume(line,now)
                         self.maps.consume(line,now)
+                        self.encounter.consume(line,now,self.maps.zone)
                         self.timers.consume(line,now,self.maps.zone)
                     self.chain.consume(line, now, self.character.split(' [')[0])
                     if self.follower.stream.tell()>self.buff_replayed_to:self.buffs.consume(line,now)
@@ -219,13 +227,13 @@ class Overlay:
                         self.last_position = mono
                         cp = configparser.ConfigParser()
                         try:
-                            cp.read(self.args.game / 'BFT_HUD/BFT_Position.ini')
+                            cp.read([self.args.game / 'BFT_HUD/BFT_Position.ini', RUNTIME/'BFT_Position.ini'])
                             self.offset = (cp.getint('Position', 'StripX', fallback=8), cp.getint('Position', 'StripY', fallback=4))
                         except (OSError, configparser.Error, ValueError): pass
                     hwnd, x, y, width, height = game
                     strip_width = max(1, width-16)
                     ox = min(max(0, self.offset[0]), max(0, width-strip_width))
-                    oy = min(max(0, self.offset[1]+46), max(0,height-76))
+                    oy = min(max(0, self.offset[1]+46+(66 if self.encounter.snapshot(now)['active'] else 0)), max(0,height-76))
                     if self.chain.config['enabled']:
                         self.root.geometry(f'{strip_width}x76'); self.win.clickthrough(self.root)
                         self.root.deiconify(); self.root.update_idletasks()
@@ -243,6 +251,7 @@ class Overlay:
                 else: self.root.withdraw()
             if not self.args.demo:
                 self.timers.tick(now)
+                self.encounter_strip.update(game,self.encounter,now,self.offset)
                 self.timer_overlay.update(game,self.timers,now)
                 self.trigger_overlay.update(game,self.triggers,now)
                 context=(self.triggers.profile_key,self.triggers.current_class(),self.triggers.zone)
@@ -276,6 +285,8 @@ class Overlay:
         self.root.after(100, self.tick)
 
 def main():
+    from privileges import require_standard_user
+    require_standard_user()
     parser = argparse.ArgumentParser()
     parser.add_argument('--game', type=Path, default=BASE.parent)
     parser.add_argument('--logs-dir', type=Path)
