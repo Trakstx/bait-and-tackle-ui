@@ -205,7 +205,8 @@ class Hub:
         self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
         self.host='127.0.0.1:'+str(self.server.server_port)
         if os.environ.get('BFT_MANAGED_SESSION'):
-            Path(__file__).with_name('dashboard-session.json').write_text(json.dumps({'url':self.url,'pid':os.getpid()}),encoding='utf-8')
+            from runtime_paths import install_state
+            (install_state(Path(__file__).parent)/'dashboard-session.json').write_text(json.dumps({'url':self.url,'pid':os.getpid()}),encoding='utf-8')
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
     @property
     def url(self):return 'http://'+self.host+'/?key='+self.token

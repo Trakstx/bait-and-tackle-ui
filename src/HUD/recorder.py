@@ -12,7 +12,7 @@ def validate(data=None):
  if not Path(folder).is_absolute() or folder.startswith(('\\\\','//')) or '\n' in folder or '\r' in folder:raise ValueError('Choose an absolute local folder for saved incidents.')
  return {'enabled':bool(d.get('enabled',False)),'folder':folder,'seconds':300,'fps':15,'bitrate':3000,'audio_bitrate':96}
 
-def engine_path():return BASE/'recorder-engine/bin/64bit/obs64.exe'
+def engine_path():return RUNTIME/('engine-'+VERSION)/'bin/64bit/obs64.exe'
 
 def install_engine(report=lambda s:None):
  exe=engine_path()
@@ -28,7 +28,7 @@ def install_engine(report=lambda s:None):
    if size>350*1024*1024:raise ValueError('Recorder download exceeded its size limit.')
    digest.update(chunk);out.write(chunk)
  if digest.hexdigest()!=SHA256:raise ValueError('Recorder download checksum did not match the pinned official release.')
- report('Installing isolated recorder engine.');root=BASE/'recorder-engine';root.mkdir(exist_ok=True)
+ report('Installing isolated recorder engine.');root=exe.parents[2];root.mkdir(parents=True,exist_ok=True)
  with zipfile.ZipFile(archive) as z:
   for item in z.infolist():
    target=(root/item.filename).resolve()

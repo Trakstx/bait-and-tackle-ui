@@ -96,7 +96,8 @@ def stop_helpers(overlay_pid,base,game_pid):
 def log(text):
  try:
   from datetime import datetime
-  path=Path(__file__).resolve().parent/'refresh-diagnostics.log'
+  from runtime_paths import install_state
+  path=install_state(Path(__file__).parent)/'refresh-diagnostics.log'
   with path.open('a',encoding='utf-8') as output:output.write(datetime.now().isoformat()+' '+str(text)+'\n')
  except OSError:pass
 

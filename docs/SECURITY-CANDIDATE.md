@@ -9,6 +9,7 @@ This branch addresses the review's F1, F2 and F4. It is not a stable release or 
 - Play, Refresh, CH and demo native entry points start standard-user helpers. When invoked from elevated EQ, the add-on requests the same desktop user's non-elevated shell token, validates its session/user/elevation, and launches with that user's environment. It never falls back to an elevated helper if this fails.
 - Python launcher/refresh/overlay/feeder entry points reject administrator execution. Launch normally from the desktop. Installing into a protected folder may still need approval. An existing elevated legacy helper may require a normal EQ/helper exit before migration; the candidate does not elevate merely to kill it.
 - Normal Play launches EQ without elevation first. Only Windows error 740 permits an EQ-only UAC request. The log readers, dashboard/browser and recorder remain standard-user children. Elevated-EQ audio capture and global hotkeys must still pass the live gate below.
+- Writable dashboard session data and refresh diagnostics now live under per-user LocalAppData, keyed by installation. The optional OBS engine and portable profile also live in the user recorder cache, not the protected game directory. Its first start may download the verified engine again; saved incident paths and existing clips are unchanged.
 - The unauthenticated `pending-autostart.bin` replacement branch is removed.
 - The add-on calculates its position path outside DLL initialization using a checked growing buffer and bounded string construction. Truncated/overlong paths fail without a buffer write. Existing short-path position files remain compatible.
 - Standalone CH and CH Demo keep their prior entry-point behavior. Restart BFT Settings retains its CH-only restart behavior; Refresh remains the combined helper refresh tool.
@@ -52,7 +53,7 @@ The frozen v0.7.0 seed supplies the existing runtime/maps/skin/vendor assets by 
 4. Verify game video and process audio, incident hotkey, replay rollover and saved-clip playback while EQ uses its real compatibility settings.
 5. Close EQ normally; verify only owned helpers/recorder close. Test refresh without an EQ restart.
 
-No real EQ session is started or closed by the automated suite. The elevated-shell-token path needs an interactive live check. Failure to obtain a standard desktop token fails visibly/diagnostically rather than executing helpers as administrator.
+No real EQ session is started or closed by the automated suite. On an elevated headless CI host the bootstrap test asserts that no helper is launched; positive automatic startup is tested on the local desktop. The elevated-shell-token path needs an interactive live check. Failure to obtain a standard desktop token fails visibly/diagnostically rather than executing helpers as administrator.
 
 ## Still open
 

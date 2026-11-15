@@ -12,11 +12,11 @@ def test(compiler, scratch):
         subprocess.run([compiler,*flags,str(source/'autostart_host_test.cpp'),'-o',str(root/'eqgame.exe'),'-luserenv','-ladvapi32','-luser32'],check=True)
         subprocess.run([compiler,*flags,'-municode','-mwindows',str(source/'autostart_recorder_test.cpp'),'-o',str(base/'runtime/pythonw.exe')],check=True)
         (base/'launcher.py').write_text('# inert fixture',encoding='utf8')
-        no_desktop=bool(ctypes.windll.shell32.IsUserAnAdmin()) and not ctypes.windll.user32.GetShellWindow()
-        environment=dict(os.environ)
-        if no_desktop:environment['BFT_TEST_EXPECT_NO_DESKTOP']='1'
-        proc=subprocess.Popen([str(root/'eqgame.exe')],env=environment,creationflags=subprocess.CREATE_NO_WINDOW)
-        pid=proc.pid;assert proc.wait(timeout=10)==0
+        proc=subprocess.Popen([str(root/'eqgame.exe')],stdout=subprocess.PIPE,stderr=subprocess.PIPE,creationflags=subprocess.CREATE_NO_WINDOW)
+        pid=proc.pid;stdout,stderr=proc.communicate(timeout=10)
+        assert proc.returncode==0,(proc.returncode,stdout,stderr)
+        no_desktop=b'BFT_EXPECT_BLOCKED=1' in stdout
+        print(stdout.decode().strip())
         record=base/'record.txt'
         for _ in range(20):
             if record.exists():break
@@ -31,7 +31,7 @@ def test(compiler, scratch):
         shutil.copy2(root/'eqgame.exe',root/'Other.exe')
         subprocess.run([str(root/'Other.exe')],check=True,timeout=10,creationflags=subprocess.CREATE_NO_WINDOW)
         assert not record.exists()
-    if no_desktop:print('PASS: elevated headless host refuses startup; no elevated fallback; non-EQ host ignored. Positive desktop handoff requires interactive validation.')
+    if no_desktop:print('PASS: elevated host without a matching standard desktop token refuses startup; no elevated fallback; non-EQ host ignored. Positive desktop handoff requires interactive validation.')
     else:print('PASS: automatic helper bootstrap once, hidden child, quoted spaced paths, exact PID, non-EQ host ignored')
 
 if __name__=='__main__':
