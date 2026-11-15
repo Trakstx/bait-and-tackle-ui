@@ -62,13 +62,43 @@ class ImportPreview(unittest.TestCase):
    try:
     def request(data):
      return urllib.request.urlopen(urllib.request.Request('http://'+hub.host+'/api/settings/preview',data=json.dumps(data).encode(),headers={'X-BFT-Token':hub.token,'Origin':'http://'+hub.host,'Content-Type':'application/json'}),timeout=3)
-    with self.assertRaises(urllib.error.HTTPError):request({'dps':None,'recorder':{'enabled':True}})
+    with self.assertRaises(urllib.error.HTTPError) as error:request({'dps':None,'recorder':{'enabled':True}})
+    error.exception.close()
     with request({'recorder':{'enabled':True},'network':{'item_lookups':True}}) as response:
      result=json.load(response);self.assertTrue(any(c['setting']=='recorder.enabled' for c in result['changes']))
     self.assertEqual(path.read_bytes(),before);self.assertFalse(hub.recorder.config['enabled'])
    finally:hub.close()
 
 class Connections(unittest.TestCase):
+ def test_continued_header_bytes_cannot_extend_total_deadline(self):
+  from http.server import BaseHTTPRequestHandler
+  class Handler(BaseHTTPRequestHandler):
+   def log_message(self,*a):pass
+  server=BoundedHTTPServer(('127.0.0.1',0),Handler,workers=1,deadline=.25);threading.Thread(target=server.serve_forever,daemon=True).start()
+  client=socket.create_connection(server.server_address);client.settimeout(1);client.sendall(b'GET / HTTP/1.1\r\nX-Drip: ')
+  try:
+   ended=False;start=time.monotonic()
+   while time.monotonic()-start<.8:
+    time.sleep(.04)
+    try:client.sendall(b'a')
+    except OSError:ended=True;break
+   self.assertTrue(ended,'Continuous bytes bypassed the total connection deadline')
+  finally:client.close();server.shutdown();server.server_close()
+ def test_excess_connection_does_not_spawn_another_worker(self):
+  from http.server import BaseHTTPRequestHandler
+  entered=threading.Event();release=threading.Event()
+  class Handler(BaseHTTPRequestHandler):
+   def log_message(self,*a):pass
+   def do_GET(self):entered.set();release.wait(2)
+  server=BoundedHTTPServer(('127.0.0.1',0),Handler,workers=1,deadline=2);threading.Thread(target=server.serve_forever,daemon=True).start();first=socket.create_connection(server.server_address);other=None
+  try:
+   first.sendall(b'GET / HTTP/1.0\r\n\r\n');self.assertTrue(entered.wait(1));other=socket.create_connection(server.server_address);other.settimeout(1)
+   try:self.assertEqual(other.recv(1),b'')
+   except ConnectionResetError:pass
+  finally:
+   release.set();first.close()
+   if other:other.close()
+   server.shutdown();server.server_close()
  def test_incomplete_headers_expire_and_capacity_recovers(self):
   from http.server import BaseHTTPRequestHandler
   class Handler(BaseHTTPRequestHandler):

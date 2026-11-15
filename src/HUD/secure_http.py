@@ -1,5 +1,5 @@
 """Bound loopback clients before parsing headers or authenticating."""
-import socket,threading
+import socket,threading,sys
 from http.server import ThreadingHTTPServer
 
 class BoundedHTTPServer(ThreadingHTTPServer):
@@ -10,6 +10,10 @@ class BoundedHTTPServer(ThreadingHTTPServer):
         super().__init__(*args,**kwargs)
     def get_request(self):
         connection,address=super().get_request();connection.settimeout(self.deadline);return connection,address
+    def handle_error(self,request,address):
+        # Deadline closure and ordinary browser disconnects are expected, not server faults.
+        if isinstance(sys.exc_info()[1],(ConnectionError,TimeoutError)):return
+        super().handle_error(request,address)
     def process_request(self,request,address):
         if not self.slots.acquire(blocking=False):
             self.shutdown_request(request);return

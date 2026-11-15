@@ -31,7 +31,8 @@ def build(compiler, sdk, output):
         args = [str(compiler), *flags, *mode, *(['-Wl,--image-base,0x68000000'] if name.endswith('.addon32') else []), 'src/native-and-tests/'+filename,
                 '-o', str(output/name), '-luserenv', '-ladvapi32', '-luser32', '-lshell32', '-lole32', '-luuid']
         subprocess.run(args, cwd=ROOT, env=environment, check=True)
-        commands[name] = [arg.replace(str(ROOT), '${SOURCE}').replace(str(output), '${OUTPUT}').replace(str(sdk), '${SDK}').replace(str(compiler), '${CXX}') for arg in args]
+        # Replace nested, specific paths before the source root (CI inputs live inside it).
+        commands[name] = [arg.replace(str(compiler), '${CXX}').replace(str(output), '${OUTPUT}').replace(str(sdk), '${SDK}').replace(str(ROOT), '${SOURCE}') for arg in args]
         outputs[name] = sha(output/name)
     receipt = {'schema': 1, 'compiler_sha256': sha(compiler),
                'compiler_version': subprocess.check_output([str(compiler), '--version'], text=True).splitlines()[0],

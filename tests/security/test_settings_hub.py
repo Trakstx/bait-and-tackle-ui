@@ -20,7 +20,8 @@ class SettingsTests(unittest.TestCase):
         if origin:headers['Origin']='http://'+self.hub.host
         if body is not None:headers['Content-Type']='application/json'
         req=urllib.request.Request('http://'+self.hub.host+path,data=json.dumps(body).encode() if body is not None else None,headers=headers)
-        return urllib.request.urlopen(req,timeout=3)
+        try:return urllib.request.urlopen(req,timeout=3)
+        except urllib.error.HTTPError as error:error.close();raise
     def test_buff_dismiss_auth_and_effect(self):
         from buff_timers import BuffTimers
         catalog={'Shield':{'name':'Shield','landing':'Shield lands.','worn_off':'Shield fades.','formula':5,'ticks':100,'icon':2}}

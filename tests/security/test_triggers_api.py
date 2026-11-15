@@ -13,7 +13,8 @@ class Tests(unittest.TestCase):
   headers={'Content-Type':'application/json'}
   if auth:headers['X-BFT-Token']=self.hub.token
   if origin:headers['Origin']='http://'+self.hub.host
-  return urllib.request.urlopen(urllib.request.Request('http://'+self.hub.host+path,headers=headers,data=json.dumps(body).encode() if body is not None else None),timeout=3)
+  try:return urllib.request.urlopen(urllib.request.Request('http://'+self.hub.host+path,headers=headers,data=json.dumps(body).encode() if body is not None else None),timeout=3)
+  except urllib.error.HTTPError as error:error.close();raise
  def rule(self):return {'id':'mine','name':'Casting','pattern':'You begin casting Complete Heal.','mode':'exact','message':'Heal started {character}','classes':['cleric'],'duration_seconds':10}
  def test_live_config_preserves_other_settings(self):
   settings_store.save({'dps':{'idle_seconds':22}},self.hub.path)
