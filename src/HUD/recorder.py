@@ -12,7 +12,9 @@ def validate(data=None):
  if not Path(folder).is_absolute() or folder.startswith(('\\\\','//')) or '\n' in folder or '\r' in folder:raise ValueError('Choose an absolute local folder for saved incidents.')
  return {'enabled':bool(d.get('enabled',False)),'folder':folder,'seconds':300,'fps':15,'bitrate':3000,'audio_bitrate':96}
 
-def engine_path():return RUNTIME/('engine-'+VERSION)/'bin/64bit/obs64.exe'
+def engine_path():
+ key=hashlib.sha256(str(BASE.resolve()).casefold().encode()).hexdigest()[:20]
+ return RUNTIME/key/('engine-'+VERSION)/'bin/64bit/obs64.exe'
 
 def install_engine(report=lambda s:None):
  exe=engine_path()

@@ -227,7 +227,7 @@ class Overlay:
                         self.last_position = mono
                         cp = configparser.ConfigParser()
                         try:
-                            cp.read(self.args.game / 'BFT_HUD/BFT_Position.ini')
+                            cp.read([self.args.game / 'BFT_HUD/BFT_Position.ini', RUNTIME/'BFT_Position.ini'])
                             self.offset = (cp.getint('Position', 'StripX', fallback=8), cp.getint('Position', 'StripY', fallback=4))
                         except (OSError, configparser.Error, ValueError): pass
                     hwnd, x, y, width, height = game

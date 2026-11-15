@@ -38,7 +38,7 @@ static void move_hud(reshade::api::effect_runtime *runtime) {
         dragging = false; previous_left = false; return;
     }
     if (!position_initialized) {
-        position_file = bft_sibling_path(bft_module_path(own_module), L"BFT_Position.ini");
+        position_file = bft_position_path(own_module);
         if (position_file.empty()) return;
         hud_position[0] = float(GetPrivateProfileIntW(L"Position", L"StripX", 8, position_file.c_str()));
         hud_position[1] = float(GetPrivateProfileIntW(L"Position", L"StripY", 4, position_file.c_str()));

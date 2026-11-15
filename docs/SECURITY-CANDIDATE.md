@@ -11,7 +11,7 @@ This branch addresses the review's F1, F2 and F4. It is not a stable release or 
 - Normal Play launches EQ without elevation first. Only Windows error 740 permits an EQ-only UAC request. The log readers, dashboard/browser and recorder remain standard-user children. Elevated-EQ audio capture and global hotkeys must still pass the live gate below.
 - Writable dashboard session data and refresh diagnostics now live under per-user LocalAppData, keyed by installation. The optional OBS engine and portable profile also live in the user recorder cache, not the protected game directory. Its first start may download the verified engine again; saved incident paths and existing clips are unchanged.
 - The unauthenticated `pending-autostart.bin` replacement branch is removed.
-- The add-on calculates its position path outside DLL initialization using a checked growing buffer and bounded string construction. Truncated/overlong paths fail without a buffer write. Existing short-path position files remain compatible.
+- The add-on calculates its position path outside DLL initialization using checked growing buffers and bounded strings. Truncated/overlong paths fail without a buffer write. Saved HUD position migrates on first use from the legacy game-folder INI to `%LOCALAPPDATA%/BaitAndTackle/BFT_Position.ini`; an existing per-user position is preserved. The Python strip anchor reads the same new path with legacy fallback, so saving a drag no longer needs game-folder write permission.
 - Standalone CH and CH Demo keep their prior entry-point behavior. Restart BFT Settings retains its CH-only restart behavior; Refresh remains the combined helper refresh tool.
 
 ## Exact native source map

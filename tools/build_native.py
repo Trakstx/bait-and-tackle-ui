@@ -29,7 +29,7 @@ def build(compiler, sdk, output):
     commands = {}; outputs = {}
     for name, (filename, mode) in TARGETS.items():
         args = [str(compiler), *flags, *mode, *(['-Wl,--image-base,0x68000000'] if name.endswith('.addon32') else []), 'src/native-and-tests/'+filename,
-                '-o', str(output/name), '-luserenv', '-ladvapi32', '-luser32', '-lshell32']
+                '-o', str(output/name), '-luserenv', '-ladvapi32', '-luser32', '-lshell32', '-lole32', '-luuid']
         subprocess.run(args, cwd=ROOT, env=environment, check=True)
         commands[name] = [arg.replace(str(ROOT), '${SOURCE}').replace(str(output), '${OUTPUT}').replace(str(sdk), '${SDK}').replace(str(compiler), '${CXX}') for arg in args]
         outputs[name] = sha(output/name)

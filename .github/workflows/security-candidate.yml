@@ -33,7 +33,7 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -c "import json; from pathlib import Path; a=json.loads(Path('build/native-a/native-build.json').read_text()); b=json.loads(Path('build/native-b/native-build.json').read_text()); assert a['binaries']==b['binaries'], 'Native builds differ'"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & $compiler -std=c++17 -m32 src/native-and-tests/test_paths.cpp -static -o build/test_paths.exe
+          & $compiler -std=c++17 -m32 src/native-and-tests/test_paths.cpp -static -o build/test_paths.exe -lshell32 -lole32 -luuid
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           & build/test_paths.exe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
