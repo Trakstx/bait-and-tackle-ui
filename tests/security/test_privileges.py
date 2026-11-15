@@ -14,6 +14,6 @@ class Tests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'without administrator rights'): require_standard_user()
             shell.assert_not_called()
     def test_pth_contains_no_external_or_site_entries(self):
-        self.assertEqual((ROOT/'src/python312._pth').read_text().splitlines(),['.','DLLs','Lib','..'])
+        self.assertEqual((ROOT/'src/python314._pth').read_text().splitlines(),['python314.zip','.','DLLs','Lib','..'])
 
 if __name__=='__main__':unittest.main()

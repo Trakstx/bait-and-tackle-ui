@@ -15,7 +15,7 @@ inline bool bft_start_session() {
     std::wstring launcher = base + L"\\launcher.py";
     if (GetFileAttributesW(python.c_str()) == INVALID_FILE_ATTRIBUTES ||
         GetFileAttributesW(launcher.c_str()) == INVALID_FILE_ATTRIBUTES) return false;
-    std::wstring command = L"\""+python+L"\" \""+launcher+L"\" --attach-only --game-pid "+std::to_wstring(GetCurrentProcessId());
+    std::wstring command = L"\""+python+L"\" -B \""+launcher+L"\" --attach-only --game-pid "+std::to_wstring(GetCurrentProcessId());
     return bft_launch_user(python, command, base);
 }
 inline void bft_autostart() {

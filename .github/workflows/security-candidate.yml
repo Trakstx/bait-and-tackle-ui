@@ -15,13 +15,17 @@ jobs:
       attestations: write
     runs-on: windows-2022
     timeout-minutes: 25
+    env:
+      BFT_VISION_FIXTURE: build/inputs/vision.zip
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
-          python-version: '3.12'
+          python-version: '3.14'
       - name: Fetch and verify pinned inputs
         run: python tools/fetch_build_inputs.py --output build/inputs
+      - name: Build patched private Python and Tk runtime
+        run: python tools/build_runtime.py --cache build/runtime-inputs --output build/runtime
       - name: Build twice and compare every custom binary
         shell: pwsh
         run: |
@@ -49,10 +53,15 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force .test-tmp | Out-Null
           python -B -m unittest discover -s tests/security -v
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node tools/test_import_state.js
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Compose and verify isolated runtime
         shell: pwsh
         run: |
-          python tools/package_candidate.py --seed build/inputs/vendor-seed.zip --native build/native-a --output build/package
+          python tools/package_candidate.py --seed build/inputs/vendor-seed.zip --native build/native-a --output build/package --runtime build/runtime
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & build/package/Bait-and-Tackle/payload/BFT_HUD/runtime/python.exe -B -m unittest discover -s tests/security -q
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tools/verify_runtime.py --hud build/package/Bait-and-Tackle/payload/BFT_HUD
           if ($LASTEXITCODE) { exit $LASTEXITCODE }

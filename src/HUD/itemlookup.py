@@ -71,6 +71,8 @@ def fetch_item(item_id,expected_name):
     if not 0<item_id<10000000: raise ValueError('Invalid item ID')
     url=f'https://lucy.allakhazam.com/item.html?id={item_id}'
     req=urllib.request.Request(url,headers={'User-Agent':'BaitAndTackle/0.4 (user-requested inventory item lookup)'})
+    from network_policy import require
+    require('item_lookups')
     with urllib.request.urlopen(req,timeout=10) as response:
         if response.geturl().split('/')[2] != 'lucy.allakhazam.com': raise ValueError('Unexpected redirect')
         body=response.read(2_000_001)

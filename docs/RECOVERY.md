@@ -1,0 +1,13 @@
+# Installation and recovery
+
+This candidate is for a **separate test copy** first. Close EQ before installation, layout-copy jobs or graphics changes. Extract the whole archive to a normal local folder and run `Install Bait and Tackle.cmd`. It verifies payload hashes before starting the private Python. Choose the intended EQ folder; installation requires a real `eqgame.exe`. Installation into a protected folder may request write permission. The installed helpers should run as a standard user.
+
+Installation, layout-copy/template operations and graphics apply/revert use staged writes with durable recovery journals. All target files are checked and backed up before applying any file. Failure during application restores the set. This is recoverable multi-file installation, not an operating-system-wide atomic snapshot. A power interruption is recovered from the applying/restoring journal on the next corresponding operation. Empty directories may remain.
+
+Backups are outside EQ, under `%LOCALAPPDATA%\BaitAndTackle`, keyed by installation. Installer receipts record the exact recovery directory. Keep that directory until you are satisfied with the candidate. Do not move or edit its numbered backup blobs or `journal.json`.
+
+To restore, close EQ and run `Recover Bait and Tackle.cmd` from the extracted candidate. Select the EQ folder and that operation's `journal.json`. You can also run the private Python with `recover.py --game <EQ folder> --journal <recovery directory>`. If the target is protected, recovery needs the same write permission as installation. Restore refuses to overwrite files changed independently since the recorded operation; inspect that conflict first. It verifies backup hashes and restricts destinations to the selected game and desktop roots.
+
+A first-install restore removes files that operation created. An upgrade restore returns files to the previous state. It is not a general uninstaller, does not remove unrelated files, and never deletes saved recording incidents. Upgrades remove obsolete installer-owned files only when their old recorded hashes still match; locally modified obsolete files require review.
+
+Recording clips must be on a fixed/removable local drive. Network drives, UNC/device paths, alternate streams and reparse/junction paths are refused. The OBS cache is separate from saved clips. If integrity verification reports a modified/incomplete engine, stop the helper/OBS and rename only the reported **engine directory** before enabling recording again; the pinned archive will reconstruct it. Do not delete the incident folder. If the archive cache itself is corrupt, it is downloaded and verified again.

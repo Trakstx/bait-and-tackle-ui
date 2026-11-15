@@ -11,4 +11,3 @@ int main() {
     assert(bft_sibling_path(L"no-directory", L"BFT_Position.ini").empty());
     assert(bft_sibling_path(L"C:\\魚\\a.dll", L"BFT_Position.ini") == L"C:\\魚\\BFT_Position.ini");
 }
-

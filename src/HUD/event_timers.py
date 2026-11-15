@@ -8,7 +8,7 @@ AOES=[dict(r,regex=re.compile(r['pattern'],re.I)) for r in DATA['aoes']]
 SERVERS={'blue':'Blue','green':'Green','red':'Red'}
 
 def validate(data=None):
- c=dict(visible=True,collapsed=False,enabled=True,shared_enabled=True,scout=True,ring8=True,boats=False,raid=True,respawn=False,respawn_seconds=400,zone_respawn=True,warning_seconds=30,sound=True,move_mode=False,x=940,y=150,width=420,height=0,rows=5);c.update(data or {})
+ c=dict(visible=True,collapsed=False,enabled=True,shared_enabled=False,scout=True,ring8=True,boats=False,raid=True,respawn=False,respawn_seconds=400,zone_respawn=True,warning_seconds=30,sound=True,move_mode=False,x=940,y=150,width=420,height=0,rows=5);c.update(data or {})
  for k,lo,hi in [('respawn_seconds',1,604800),('warning_seconds',0,3600),('x',0,16384),('y',0,16384),('width',240,800),('height',0,800),('rows',1,8)]:
   v=float(c[k])
   if not math.isfinite(v) or not lo<=v<=hi:raise ValueError('Invalid timer '+k)
@@ -123,6 +123,8 @@ class Timers:
   try:
    def get(path):
     req=urllib.request.Request('https://pigparse.azurewebsites.net/api/'+path+'/'+server,headers={'User-Agent':'BaitAndTackle/1.0 (read-only timers)'})
+    from network_policy import require
+    require('shared_timers')
     with urllib.request.urlopen(req,timeout=8) as r:
      body=r.read(262145)
      if len(body)>262144:raise ValueError('Timer response too large.')

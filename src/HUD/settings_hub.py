@@ -4,7 +4,8 @@ import sqlite3
 import secrets
 import threading
 import webbrowser
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from secure_http import BoundedHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 from chchain import Chain
@@ -116,13 +117,29 @@ class Hub:
                     return self.reply(200,settings_store.load(hub.path))
                 return self.reply(403,{'error':'Open settings through Ctrl+J.'})
             def do_POST(self):
-                if not self.auth() or self.headers.get('Origin') != 'http://'+hub.host:return self.reply(403,{'error':'Unauthorized request'})
+                if not self.auth() or self.headers.get('Origin') != 'http://'+hub.host:
+                    try:
+                        length=int(self.headers.get('Content-Length','0'))
+                        if 0<length<=4096:self.rfile.read(length)
+                    except (ValueError,OSError):pass
+                    return self.reply(403,{'error':'Unauthorized request'})
                 try:
                     if self.path in ['/api/updates/check','/api/updates/download']:return self.reply(200,hub.updates.request(self.path.rsplit('/',1)[1]))
                     length=int(self.headers.get('Content-Length','0'))
                     if not 0<length<=65536:return self.reply(413,{'error':'Request too large'})
                     data=json.loads(self.rfile.read(length))
                     with hub.lock:
+                        if self.path=='/api/settings/preview':
+                            if not isinstance(data,dict):raise ValueError('Profile must be an object.')
+                            normalized=settings_store.validate(data)
+                            before=settings_store.load(hub.path);changes=[]
+                            def compare(old,new,prefix=''):
+                                for key in sorted(set(old)|set(new)):
+                                    a=old.get(key);b=new.get(key);name=prefix+key
+                                    if isinstance(a,dict) and isinstance(b,dict):compare(a,b,name+'.')
+                                    elif a!=b:changes.append({'setting':name,'before':a,'after':b})
+                            compare(before,normalized)
+                            return self.reply(200,{'settings':normalized,'changes':changes})
                         if self.path=='/api/klandicar/config':
                             value=settings_store.load(hub.path);value['klandicar']=data;value=settings_store.save(value,hub.path)
                             if hub.encounter:hub.encounter.configure(value['klandicar'])
@@ -202,7 +219,7 @@ class Hub:
                             return self.reply(200,{'matched':ok,'slot':chain.last.slot if ok else '', 'target':chain.last.target if ok else ''})
                     self.reply(404,{'error':'Not found'})
                 except (ValueError,TypeError,KeyError,AttributeError,OSError,sqlite3.Error) as e:self.reply(400,{'error':str(e)})
-        self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+        self.server=BoundedHTTPServer(('127.0.0.1',0),Handler)
         self.host='127.0.0.1:'+str(self.server.server_port)
         if os.environ.get('BFT_MANAGED_SESSION'):
             from runtime_paths import install_state

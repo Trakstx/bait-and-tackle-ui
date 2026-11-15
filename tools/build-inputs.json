@@ -13,6 +13,11 @@
   "vendor_seed": {
     "url": "https://github.com/Trakstx/bait-and-tackle-ui/releases/download/v0.7.0/Bait-and-Tackle-v0.7.0.zip",
     "sha256": "9c637eebb8801a5476eb2640950f008e14ef81720c4dfdbbe8ceb1f79846fa6e",
-    "purpose": "Frozen runtime, maps, skin and third-party assets. All six BFT native binaries are rebuilt. All top-level helper application source is replaced from this commit. This does not fix the audit's outdated-runtime finding."
+    "purpose": "Frozen maps, skin, ReShade and artwork only. The old Python runtime and all BFT binaries are replaced by pinned rebuilt inputs."
+  },
+  "vision_fixture": {
+    "url": "https://raw.githubusercontent.com/smasherprog/EqTool/8ab4501517c4ad10914a91414d8eda1cf80d2e57/EQTool/Files/VisionFix.zip",
+    "sha256": "105d0cf2c746f894ac85937dbfad0fadb627809e763aeabb4e9157fdadc3528d",
+    "purpose": "Read-only archive fixture for graphics rollback tests; never applied to a real game by CI."
   }
 }

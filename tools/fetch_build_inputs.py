@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def fetch(output):
     output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
     pins=json.loads((ROOT/'tools/build-inputs.json').read_text())
-    names={'compiler':'compiler.7z.exe','sdk':'sdk.zip','vendor_seed':'vendor-seed.zip'}
+    names={'compiler':'compiler.7z.exe','sdk':'sdk.zip','vendor_seed':'vendor-seed.zip','vision_fixture':'vision.zip'}
     for key,name in names.items():
         destination=output/name
         if not destination.exists():

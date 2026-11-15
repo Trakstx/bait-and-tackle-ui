@@ -1,4 +1,4 @@
-> **Security candidate branch:** startup isolation, standard-user helpers and reproducible native builds are under review. See [candidate notes](docs/SECURITY-CANDIDATE.md). This branch does not replace the published v0.7.0 download.
+> **Security candidate branch:** startup isolation, standard-user helpers, recoverable installs, patched runtime, bounded HTTP and network opt-ins are under review. See [candidate notes](docs/SECURITY-CANDIDATE.md). This branch does not replace the published v0.7.0 download.
 
 # Bait & Tackle
 
@@ -12,7 +12,7 @@ Download the playable ZIP from [Releases](https://github.com/Trakstx/bait-and-ta
 
 ## Documentation
 
-**[Open the illustrated wiki](docs/wiki/README.md)** — setup, feature walkthroughs, screenshots, troubleshooting, privacy and release operations.
+**[Open the illustrated wiki](docs/wiki/README.md)** â€” setup, feature walkthroughs, screenshots, troubleshooting, privacy and release operations.
 
 
 - [Player guide and complete feature reference](docs/PLAYER-GUIDE.md)

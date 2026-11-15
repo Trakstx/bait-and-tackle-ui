@@ -6,7 +6,7 @@ from runtime_paths import install_state
 import recorder
 class Tests(unittest.TestCase):
  def test_state_is_per_user_and_install(self):
-  with tempfile.TemporaryDirectory() as temp,patch.dict(os.environ,{'LOCALAPPDATA':temp}):
+  with tempfile.TemporaryDirectory(dir=ROOT/'.test-tmp') as temp,patch.dict(os.environ,{'LOCALAPPDATA':temp}):
    first=install_state(Path(temp)/'game-a/BFT_HUD');second=install_state(Path(temp)/'game-b/BFT_HUD')
    self.assertNotEqual(first,second);self.assertTrue(first.is_relative_to(Path(temp)/'BaitAndTackle/installs'))
    self.assertEqual(first,install_state(Path(temp)/'game-a/BFT_HUD'))

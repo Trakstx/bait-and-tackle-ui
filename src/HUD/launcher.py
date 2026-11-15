@@ -77,6 +77,8 @@ def main():
     executable = (game / 'eqgame.exe').resolve()
     from game_window import game_window,window_alive
     visible=game_window(executable,game_pid)
+    if game_pid and not visible and game_pid not in find_game_processes(executable):
+        raise RuntimeError('The requested process is not a verified EverQuest session from this installation.')
     matches = [game_pid] if game_pid else ([visible['pid']] if visible else find_game_processes(executable))
     if attach_only and not matches:return
     if len(matches) > 1:
@@ -129,8 +131,8 @@ def main():
         session_path.write_text(json.dumps({'pid':selected_pid,'hwnd':visible['hwnd'] if visible else None,'token':session_id,'active':True}),encoding='utf-8')
         os.environ['BFT_GAME_SESSION']=session_id
         feed_args = ['--auto', '--logs-dir', str(logs_dir)] if automatic else ['--log', str(log)]
-        job.start([str(python), str(base / 'feeder.py'), *feed_args], base)
-        job.start([str(python), str(base / 'ch_overlay.py'), '--game', str(game),
+        job.start([str(python), '-B', str(base / 'feeder.py'), *feed_args], base)
+        job.start([str(python), '-B', str(base / 'ch_overlay.py'), '--game', str(game),
             '--logs-dir', str(logs_dir), *(['--settings'] if '--settings' in sys.argv else [])], base)
         # Wait on this exact process, including while minimized. No permanent watcher.
         if handle:game_finished=k.WaitForSingleObject(handle,0xffffffff)==0

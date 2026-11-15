@@ -27,7 +27,8 @@ def validate(data):
     misc=data.get('misc',{})
     anchor=float(misc.get('tick_anchor',0))
     if not math.isfinite(anchor) or not 0<=anchor<=4102444800:raise ValueError('Invalid tick synchronization time.')
-    return {'klandicar':validate_klandicar(data.get('klandicar',{})),'recorder':validate_recorder(data.get('recorder',{})),'timers':validate_timers(data.get('timers',{})),'triggers':validate_triggers(data.get('triggers',{})),'misc':{'tick_enabled':bool(misc.get('tick_enabled',False)),'tick_anchor':anchor},'dps':{'enabled':bool(dps.get('enabled',True)),'idle_seconds':idle,'pet_names_by_character':clean},
+    from network_policy import validate as validate_network
+    return {'network':validate_network(data.get('network')),'klandicar':validate_klandicar(data.get('klandicar',{})),'recorder':validate_recorder(data.get('recorder',{})),'timers':validate_timers(data.get('timers',{})),'triggers':validate_triggers(data.get('triggers',{})),'misc':{'tick_enabled':bool(misc.get('tick_enabled',False)),'tick_anchor':anchor},'dps':{'enabled':bool(dps.get('enabled',True)),'idle_seconds':idle,'pet_names_by_character':clean},
             'ch':validate_chain(data.get('ch', {})), 'aggro':{'available':True,'enabled':bool(data.get('aggro',{}).get('enabled',True))},'buffs':validate_buffs(data.get('buffs',{}))}
 
 def load(path=PATH):
@@ -40,7 +41,8 @@ def load(path=PATH):
 
 def save(data, path=PATH):
     data=validate(data);path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
-    temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8');temporary.replace(path)
+    from file_transaction import write_atomic
+    write_atomic(path,(json.dumps(data,indent=2)+'\n').encode('utf8'))
     return data
 
 def apply_dps(meter, character, settings, legacy=None):

@@ -11,7 +11,7 @@ def verify(hud):
         code="import sys,json,tkinter,sqlite3,ssl,ctypes,settings_hub,class_triggers,recorder,feeder,ch_overlay; print(json.dumps({'paths':sys.path,'site':'site' in sys.modules,'tk':tkinter.Tcl().eval('info patchlevel')}))"
         result=subprocess.run([str(python),'-B','-c',code],cwd=external,env=dict(os.environ,PYTHONPATH=str(external)),capture_output=True,text=True,check=True)
         data=json.loads(result.stdout)
-        expected=[hud/'runtime',hud/'runtime/DLLs',hud/'runtime/Lib',hud]
+        expected=[hud/'runtime/python314.zip',hud/'runtime',hud/'runtime/DLLs',hud/'runtime/Lib',hud]
         assert [Path(p).resolve() for p in data['paths']]==expected, data
         assert not data['site'] and 'EXTERNAL_STARTUP' not in result.stderr, result.stderr
     print('PASS: private paths only, site hooks disabled, dashboard/recording/parser/Tk imports intact')

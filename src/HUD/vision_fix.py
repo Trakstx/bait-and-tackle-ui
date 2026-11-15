@@ -49,42 +49,42 @@ class VisionFix:
    if not mode:return
    try:
     from process_check import find_game_processes
-    running=find_game_processes()
-    if running:
-     state['blocked']='Waiting for running EverQuest process(es): '+', '.join(map(str,running));self.save(state);return
-    state['blocked']=None;state['attempted']=time.time();self.save(state)
+    from file_transaction import FileTransaction
+    if find_game_processes():state['blocked']='Waiting for EverQuest to close.';self.save(state);return
+    state['blocked']=None;state['attempted']=time.time()
+    recovery=self.directory/'recovery';FileTransaction.recover_pending(recovery,[self.game,self.directory])
+    transaction=FileTransaction(recovery,[self.game,self.directory])
     if mode=='apply':
      with self.archive(False) as z:
+      entries={e.filename:e for e in z.infolist() if not e.is_dir()}
+      if len(entries)!=265:raise ValueError('Unexpected graphics archive.')
       if not state.get('files'):
        files=[]
-       for entry in z.infolist():
-        if entry.is_dir():continue
-        target=self.target(entry.filename);backup=self.directory/'backups'/entry.filename;exists=target.is_file();original=target.read_bytes() if exists else None
-        if exists:backup.parent.mkdir(parents=True,exist_ok=True);backup.write_bytes(original)
-        files.append({'name':entry.filename,'existed':exists,'before':hashlib.sha256(original).hexdigest() if exists else None,'after':hashlib.sha256(z.read(entry)).hexdigest()})
+       for name,entry in entries.items():
+        target=self.target(name);exists=target.is_file();before=target.read_bytes() if exists else None
+        backup=self.directory/'backups'/name
+        if before is not None:backup.parent.mkdir(parents=True,exist_ok=True);backup.write_bytes(before)
+        files.append({'name':name,'existed':exists,'before':hashlib.sha256(before).hexdigest() if exists else None,'after':hashlib.sha256(z.read(entry)).hexdigest()})
        state['files']=files;self.save(state)
       for row in state['files']:
-       target=self.target(row['name']);current=hashlib.sha256(target.read_bytes()).hexdigest() if target.is_file() else None
-       if current not in [row['before'],row['after']]:raise ValueError('Graphics changed since backup: '+row['name']+'. Existing backup retained.')
-       target.parent.mkdir(parents=True,exist_ok=True);temp=target.with_suffix(target.suffix+'.bft-tmp');temp.write_bytes(z.read(row['name']));temp.replace(target)
-     for row in state['files']:
-      if hashlib.sha256(self.target(row['name']).read_bytes()).hexdigest()!=row['after']:raise ValueError('Graphics verification failed: '+row['name'])
+       target=self.target(row['name']);raw=z.read(row['name']);current=hashlib.sha256(target.read_bytes()).hexdigest() if target.is_file() else None
+       if current not in (row['before'],row['after']):raise ValueError('Graphics changed since backup: '+row['name'])
+       if hashlib.sha256(raw).hexdigest()!=row['after']:raise ValueError('Graphics state does not match pinned archive.')
+       transaction.add(target,raw)
      state['applied']=True
-    else:
-     # Validate all backups and detect subsequent modifications before restoring any file.
+    elif mode=='revert':
      for row in state['files']:
-      target=self.target(row['name']);backup=self.directory/'backups'/row['name'];current=hashlib.sha256(target.read_bytes()).hexdigest() if target.is_file() else None
-      if current not in [row['before'],row['after']]:raise ValueError('Another graphics change was found: '+row['name']+'. Restore paused; backup retained.')
-      if row['existed'] and (not backup.is_file() or hashlib.sha256(backup.read_bytes()).hexdigest()!=row['before']):raise ValueError('Original backup is missing or damaged: '+row['name'])
-     for row in state['files']:
-      target=self.target(row['name'])
-      if row['existed']:
-       temp=target.with_suffix(target.suffix+'.bft-tmp');temp.write_bytes((self.directory/'backups'/row['name']).read_bytes());temp.replace(target)
-      elif target.is_file():target.unlink()
+      target=self.target(row['name']);current=hashlib.sha256(target.read_bytes()).hexdigest() if target.is_file() else None
+      if current not in (row['before'],row['after']):raise ValueError('Graphics changed after installation: '+row['name'])
+      raw=(self.directory/'backups'/row['name']).read_bytes() if row['existed'] else None
+      if (hashlib.sha256(raw).hexdigest() if raw is not None else None)!=row['before']:raise ValueError('Graphics recovery backup is damaged.')
+      transaction.add(target,raw)
      state['applied']=False
-    state['pending']=None;state['error']=None;state['updated']=time.time();self.save(state)
-   except (OSError,ValueError,KeyError,zipfile.BadZipFile) as exc:
-    state['error']=str(exc);state['updated']=time.time();self.save(state)
+    else:raise ValueError('Invalid pending graphics action.')
+    state.update(pending=None,error=None,updated=time.time())
+    transaction.add(self.directory/'state.json',json.dumps(state,indent=2).encode('utf8'));transaction.commit()
+   except (OSError,ValueError,KeyError,TypeError,zipfile.BadZipFile) as exc:
+    state=self.state();state['error']=str(exc);state['updated']=time.time();self.save(state)
 
 
 def main():
