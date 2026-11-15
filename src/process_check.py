@@ -3,7 +3,25 @@ import ctypes
 from ctypes import wintypes
 
 
-def is_game_running():
+def process_still_running(kernel, pid):
+    """A listed process may already be signaled during Windows teardown.
+
+    Inaccessible processes remain blockers: absence of permission is not proof
+    that it is safe to change game files.
+    """
+    handle = kernel.OpenProcess(0x100000, False, pid)  # SYNCHRONIZE only
+    if not handle:
+        return True
+    try:
+        return kernel.WaitForSingleObject(handle, 0) != 0
+    finally:
+        kernel.CloseHandle(handle)
+
+
+def find_game_processes(executable=None):
+    from pathlib import Path
+    from session_lifecycle import k, process_path
+    matches = []
     class PROCESSENTRY32W(ctypes.Structure):
         _fields_ = [
             ('dwSize', wintypes.DWORD), ('cntUsage', wintypes.DWORD),
@@ -20,6 +38,10 @@ def is_game_running():
     kernel.Process32NextW.argtypes = kernel.Process32FirstW.argtypes
     kernel.Process32NextW.restype = wintypes.BOOL
     kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenProcess.restype = wintypes.HANDLE
+    kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel.WaitForSingleObject.restype = wintypes.DWORD
     snapshot = kernel.CreateToolhelp32Snapshot(2, 0)
     if snapshot == ctypes.c_void_p(-1).value:
         raise ctypes.WinError(ctypes.get_last_error())
@@ -28,15 +50,28 @@ def is_game_running():
         entry.dwSize = ctypes.sizeof(entry)
         ok = kernel.Process32FirstW(snapshot, ctypes.byref(entry))
         while ok:
-            if entry.szExeFile.casefold() == 'eqgame.exe':
-                return True
+            if entry.szExeFile.casefold() == 'eqgame.exe' and process_still_running(kernel, entry.th32ProcessID):
+                if executable is None:
+                    matches.append(entry.th32ProcessID)
+                else:
+                    handle = k.OpenProcess(0x1000, False, entry.th32ProcessID)
+                    if handle:
+                        try:
+                            if Path(process_path(handle)).resolve() == Path(executable).resolve():
+                                matches.append(entry.th32ProcessID)
+                        finally:
+                            k.CloseHandle(handle)
             ok = kernel.Process32NextW(snapshot, ctypes.byref(entry))
         error = ctypes.get_last_error()
         if error not in (0, 18):  # ERROR_NO_MORE_FILES is normal completion.
             raise ctypes.WinError(error)
-        return False
+        return matches
     finally:
         kernel.CloseHandle(snapshot)
+
+
+def is_game_running():
+    return bool(find_game_processes())
 
 
 if __name__ == '__main__':

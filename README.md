@@ -1,3 +1,5 @@
+> **Security candidate branch:** startup isolation, standard-user helpers and reproducible native builds are under review. See [candidate notes](docs/SECURITY-CANDIDATE.md). This branch does not replace the published v0.7.0 download.
+
 # Bait & Tackle
 
 An unofficial Project 1999 skin and companion dashboard for combat parsing, CH chains, buff estimates, maps, bank snapshots, class alerts, timers, layout copying, and optional rolling incident capture.

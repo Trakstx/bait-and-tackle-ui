@@ -1,0 +1,26 @@
+Bait & Tackle Incident Recorder
+
+Engine: OBS Studio 33.0.1, GPL-2.0-or-later, https://github.com/obsproject/obs-studio
+Official release: https://github.com/obsproject/obs-studio/releases/tag/33.0.1
+Portable archive SHA256: 0d9436451c2d772b33428e3fdae9776f071895c335de17283176306fb72651d3
+Engine license and third-party notices are included in its data folder.
+
+Ctrl+H / Ctrl+J -> Recorder: start/stop, save incident, select saved-clip folder.
+Ctrl+Shift+F9 saves the current replay. No automatic upload or streaming.
+
+The rolling replay is retained in OBS memory for up to 300 seconds; older packets
+are discarded continuously. There is no ongoing disk recording and no deletion
+of saved incidents. Five minutes at 3000 kbps video + 96 kbps audio is about
+116 MB before container overhead. Buffer length can differ slightly at keyframes.
+Native client resolution is captured up to 1920x1200 at 15 FPS. H.264 hardware
+encoding is selected for NVIDIA/AMD/Intel where supported; otherwise x264 is used.
+
+Only window_capture via Windows Graphics Capture, with EQ process audio, is
+created. No game injection, microphone, desktop, browser, or streaming source.
+OBS WebSocket is disabled; control uses a private local file-based Lua bridge.
+The engine has its own portable config. A Windows job owns it and its child
+muxers; closing the BFT helper or EQ stops them. Saved clips are MKV so a normal
+completed save does not depend on writing an MP4 footer at exit.
+
+Saved incidents are never automatically deleted. Stopping or closing EQ discards
+the unsaved replay. Helper refresh also resets the current unsaved replay.

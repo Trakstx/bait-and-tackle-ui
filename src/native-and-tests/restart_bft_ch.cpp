@@ -4,11 +4,14 @@
 #include <shellapi.h>
 #include <string>
 #include <cwchar>
+#include "bft_paths.hpp"
+#include "bft_user_process.hpp"
 // Update only our CH helper, identified by its own hidden root window and exact
 // private-runtime executable path. Never enumerate or terminate the game.
 int WINAPI wWinMain(HINSTANCE,HINSTANCE,PWSTR,int) {
-    wchar_t module[32768]={};GetModuleFileNameW(nullptr,module,32768);
-    std::wstring base(module);base=base.substr(0,base.find_last_of(L"\\"));
+    auto module=bft_module_path();
+    if(module.empty() || module.find_last_of(L"\\/")==std::wstring::npos)return 1;
+    std::wstring base=module.substr(0,module.find_last_of(L"\\/"));
     std::wstring expected=base+L"\\runtime\\pythonw.exe";
     HWND root=FindWindowW(nullptr,L"BFT CH Chain");
     if(root) {
@@ -22,6 +25,6 @@ int WINAPI wWinMain(HINSTANCE,HINSTANCE,PWSTR,int) {
         CloseHandle(process);
     }
     std::wstring args=L"\""+base+L"\\ch_overlay.py\" --settings";
-    auto result=ShellExecuteW(nullptr,L"open",expected.c_str(),args.c_str(),base.c_str(),SW_SHOWNORMAL);
-    return reinterpret_cast<INT_PTR>(result)>32?0:4;
+    std::wstring command=L"\""+expected+L"\" "+args;
+    return bft_launch_user(expected,command,base)?0:4;
 }

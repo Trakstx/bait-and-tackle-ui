@@ -33,16 +33,10 @@ class SHELLEXECUTEINFO(ctypes.Structure):
         ('lpClass', wintypes.LPCWSTR), ('hkeyClass', wintypes.HKEY),
         ('dwHotKey', wintypes.DWORD), ('hIcon', wintypes.HANDLE), ('hProcess', wintypes.HANDLE)]
 
-def apply_layouts():
-    try:
-        if find_game_processes():return
-        from layout_tools import LayoutService
-        LayoutService(game,runtime/'layouts').apply_pending()
-        from vision_fix import VisionFix
-        VisionFix(game,runtime).apply_pending()
-    except (OSError,ValueError,TypeError,KeyError) as exc:
-        try:(runtime/'layout-errors.log').write_text(str(exc),encoding='utf-8')
-        except OSError:pass
+def apply_layouts(wait_seconds=0):
+    from deferred_actions import run
+    return run(game,runtime,wait_seconds)
+
 
 def game_identity(handle):
     created=wintypes.FILETIME();ended=wintypes.FILETIME();kernel=wintypes.FILETIME();user=wintypes.FILETIME()
@@ -61,17 +55,8 @@ def main():
         game_pid = int(sys.argv[index+1])
         if game_pid <= 0: raise ValueError('Invalid EverQuest process ID.')
         attach_only = True
-    # Run both halves under the same token. The game already requests admin
-    # access; elevating the launcher first avoids splitting feed/game contexts.
-    if not attach_only and not ctypes.windll.shell32.IsUserAnAdmin():
-        if '--elevated' in sys.argv:
-            raise RuntimeError('Windows administrator permission was not granted.')
-        command = subprocess.list2cmdline([str(Path(__file__).resolve()), '--elevated'])
-        result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', sys.executable,
-            command, str(Path(__file__).resolve().parent), 0)
-        if result <= 32:
-            raise RuntimeError('Windows did not authorize starting Bait & Tackle.')
-        return
+    from privileges import require_standard_user
+    require_standard_user()
     k.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
     k.CreateMutexW.restype = wintypes.HANDLE
     session_mutex = k.CreateMutexW(None, False, 'Local\\BFT_Session_' + hashlib.sha256(str(game.resolve()).casefold().encode()).hexdigest()[:24])
@@ -115,15 +100,26 @@ def main():
                 if not visible:raise RuntimeError('EQ denied a wait handle and no verified EQ window is available.')
                 window_watch=visible['hwnd']
         else:
-            pending = base / 'pending-autostart.bin'
-            if pending.is_file():
-                import shutil
-                shutil.copy2(pending, base / 'BFT_HUD.addon32')
-                pending.unlink()
             apply_layouts()
-            owner = subprocess.Popen([str(executable), 'patchme'], cwd=game)
-            handle = owner._handle
-            selected_pid = owner.pid
+            try:
+                owner = subprocess.Popen([str(executable), 'patchme'], cwd=game)
+                handle = owner._handle
+                selected_pid = owner.pid
+            except OSError as exc:
+                if getattr(exc, 'winerror', None) != 740: raise
+                # Elevate EQ only when Windows explicitly requires it; helpers stay standard-user.
+                launch = SHELLEXECUTEINFO(); launch.cbSize = ctypes.sizeof(launch)
+                launch.fMask = 0x40; launch.lpVerb = 'runas'; launch.lpFile = str(executable)
+                launch.lpParameters = 'patchme'; launch.lpDirectory = str(game); launch.nShow = 1
+                shell = ctypes.windll.shell32
+                shell.ShellExecuteExW.argtypes = [ctypes.POINTER(SHELLEXECUTEINFO)]
+                shell.ShellExecuteExW.restype = wintypes.BOOL
+                if not shell.ShellExecuteExW(ctypes.byref(launch)) or not launch.hProcess:
+                    raise RuntimeError('Windows did not authorize starting EverQuest.')
+                handle = launch.hProcess
+                k.GetProcessId.argtypes = [wintypes.HANDLE]; k.GetProcessId.restype = wintypes.DWORD
+                selected_pid = k.GetProcessId(handle)
+                if not selected_pid: raise RuntimeError('Cannot identify the newly launched EQ process.')
         os.environ['BFT_MANAGED_SESSION'] = '1'
         session_path=runtime/('session-'+hashlib.sha256(str(game.resolve()).casefold().encode()).hexdigest()[:20]+'.json')
         try:previous=json.loads(session_path.read_text(encoding='utf-8'))
@@ -154,10 +150,13 @@ def main():
         if game_finished:
             try:session_path.write_text(json.dumps({'active':False}),encoding='utf-8')
             except OSError:pass
-            from experience import finish_game,database_path
-            try:finish_game(database_path(game,runtime),session_id)
-            except (OSError,sqlite3.Error):pass
-            apply_layouts()
+            try:
+                from experience import finish_game,database_path
+                finish_game(database_path(game,runtime),session_id)
+            except Exception as exc:
+                try:(runtime/'experience-cleanup-error.log').write_text(str(exc),encoding='utf-8')
+                except OSError:pass
+            finally:apply_layouts(wait_seconds=5)
         if handle and owner is None: k.CloseHandle(handle)
 
 if __name__ == '__main__':

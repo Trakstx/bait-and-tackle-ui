@@ -13,7 +13,7 @@ class VisionFix:
   self.directory.mkdir(parents=True,exist_ok=True);tmp=self.directory/'state.tmp';tmp.write_text(json.dumps(state,indent=2),encoding='utf-8');tmp.replace(self.directory/'state.json')
  def status(self):
   with self.lock:
-   state=self.state();return {k:state.get(k) for k in ['applied','pending','error','updated']}|{'files':len(state.get('files',[])),'backup':str(self.directory/'backups'),'source':'EQTool Night Vision graphics fix','note':'Graphics-file replacement, not an Ultravision spell or character buff. Applies only while EQ is closed.'}
+   state=self.state();return {k:state.get(k) for k in ['applied','pending','error','updated','attempted','blocked']}|{'files':len(state.get('files',[])),'backup':str(self.directory/'backups'),'source':'EQTool Night Vision graphics fix','note':'Graphics-file replacement, not an Ultravision spell or character buff. Applies only while EQ is closed.'}
  def archive(self,download=True):
   p=self.directory/'VisionFix.zip'
   if not p.is_file() or (download and hashlib.sha256(p.read_bytes()).hexdigest()!=SHA256):
@@ -48,6 +48,11 @@ class VisionFix:
    state=self.state();mode=state.get('pending')
    if not mode:return
    try:
+    from process_check import find_game_processes
+    running=find_game_processes()
+    if running:
+     state['blocked']='Waiting for running EverQuest process(es): '+', '.join(map(str,running));self.save(state);return
+    state['blocked']=None;state['attempted']=time.time();self.save(state)
     if mode=='apply':
      with self.archive(False) as z:
       if not state.get('files'):
@@ -62,6 +67,8 @@ class VisionFix:
        target=self.target(row['name']);current=hashlib.sha256(target.read_bytes()).hexdigest() if target.is_file() else None
        if current not in [row['before'],row['after']]:raise ValueError('Graphics changed since backup: '+row['name']+'. Existing backup retained.')
        target.parent.mkdir(parents=True,exist_ok=True);temp=target.with_suffix(target.suffix+'.bft-tmp');temp.write_bytes(z.read(row['name']));temp.replace(target)
+     for row in state['files']:
+      if hashlib.sha256(self.target(row['name']).read_bytes()).hexdigest()!=row['after']:raise ValueError('Graphics verification failed: '+row['name'])
      state['applied']=True
     else:
      # Validate all backups and detect subsequent modifications before restoring any file.
@@ -78,3 +85,30 @@ class VisionFix:
     state['pending']=None;state['error']=None;state['updated']=time.time();self.save(state)
    except (OSError,ValueError,KeyError,zipfile.BadZipFile) as exc:
     state['error']=str(exc);state['updated']=time.time();self.save(state)
+
+
+def main():
+ import ctypes,os,subprocess,sys
+ from process_check import find_game_processes
+ game=Path(__file__).resolve().parent.parent
+ if not (game/'eqgame.exe').is_file():raise RuntimeError('Run this tool from the installed BFT_HUD folder beside EverQuest.')
+ if find_game_processes():raise RuntimeError('EverQuest is still running. Close every EQ session before applying or restoring graphics.')
+ if not ctypes.windll.shell32.IsUserAnAdmin():
+  if '--elevated' in sys.argv:raise RuntimeError('Administrator access was not granted.')
+  args=subprocess.list2cmdline([str(Path(__file__).resolve()),*sys.argv[1:],'--elevated'])
+  if ctypes.windll.shell32.ShellExecuteW(None,'runas',sys.executable,args,str(game),1)<=32:raise RuntimeError('Windows did not authorize the graphics repair.')
+  return
+ runtime=Path(os.environ.get('LOCALAPPDATA',str(Path.home())))/'BaitAndTackle'
+ fix=VisionFix(game,runtime);mode='revert' if '--revert-now' in sys.argv else 'apply'
+ fix.queue(mode);fix.apply_pending();state=fix.state()
+ if state.get('error') or state.get('pending'):raise RuntimeError(state.get('error') or state.get('blocked') or 'Graphics change remains pending.')
+ if mode=='apply' and not state.get('applied'):raise RuntimeError('Graphics repair was not applied.')
+ message=('Night-vision graphics verified: '+str(len(state['files']))+' files. You may start EQ now.') if mode=='apply' else 'Original graphics restored. You may start EQ now.'
+ ctypes.windll.user32.MessageBoxW(None,message,'Bait & Tackle graphics repair',0x40)
+
+if __name__=='__main__':
+ try:main()
+ except Exception as exc:
+  import ctypes
+  ctypes.windll.user32.MessageBoxW(None,str(exc),'Bait & Tackle graphics repair',0x10)
+  raise SystemExit(1)

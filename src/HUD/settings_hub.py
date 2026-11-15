@@ -19,6 +19,7 @@ class Hub:
         from updates import Updates
         self.updates=Updates()
         hub=self
+        self.encounter = None
         self.buff_engine = None
         self.trigger_engine = None
         self.timers = None
@@ -53,7 +54,7 @@ class Hub:
                 if self.headers.get('Host')!=hub.host:return self.reply(403,{'error':'Wrong host'})
                 if url.path=='/' and secrets.compare_digest(parse_qs(url.query).get('key',[''])[0],hub.token):
                     return self.reply(200,(Path(__file__).with_name('settings.html')).read_bytes(),'text/html')
-                if url.path in ['/settings.js','/settings.css','/maps.js','/misc.js','/experience.js','/triggers.js','/timers.js','/recorder.js','/updates.js']:
+                if url.path in ['/settings.js','/settings.css','/maps.js','/misc.js','/experience.js','/triggers.js','/timers.js','/recorder.js','/updates.js','/klandicar.js']:
                     return self.reply(200,Path(__file__).with_name(url.path[1:]).read_bytes(),'text/javascript' if url.path.endswith('.js') else 'text/css')
                 if url.path=='/api/item-icon' and secrets.compare_digest(parse_qs(url.query).get('key',[''])[0],hub.token):
                     args=parse_qs(url.query)
@@ -92,6 +93,7 @@ class Hub:
                     from dashboard_data import history_snapshot
                     character=parse_qs(url.query).get('character',[''])[0]
                     return self.reply(200,history_snapshot(settings_store.RUNTIME/'history',character))
+                if url.path=='/api/klandicar' and self.auth():return self.reply(200,{'settings':settings_store.load(hub.path)['klandicar'],'encounter':hub.encounter.snapshot(time.time()) if hub.encounter else None})
                 if url.path=='/api/updates' and self.auth():return self.reply(200,hub.updates.snapshot())
                 if url.path=='/api/recorder' and self.auth():return self.reply(200,hub.recorder.snapshot())
                 if url.path=='/api/aggro' and self.auth():
@@ -121,6 +123,15 @@ class Hub:
                     if not 0<length<=65536:return self.reply(413,{'error':'Request too large'})
                     data=json.loads(self.rfile.read(length))
                     with hub.lock:
+                        if self.path=='/api/klandicar/config':
+                            value=settings_store.load(hub.path);value['klandicar']=data;value=settings_store.save(value,hub.path)
+                            if hub.encounter:hub.encounter.configure(value['klandicar'])
+                            return self.reply(200,value['klandicar'])
+                        if self.path in ('/api/klandicar/arm','/api/klandicar/stop'):
+                            if not hub.encounter:raise ValueError('Refresh the Bait & Tackle helper to load the encounter strip.')
+                            if self.path.endswith('/arm'):hub.encounter.arm()
+                            else:hub.encounter.disarm()
+                            return self.reply(200,hub.encounter.snapshot(time.time()))
                         if self.path=='/api/recorder/config':
                             value=settings_store.load(hub.path);hub.recorder.configure(data);value['recorder']=hub.recorder.config;value=settings_store.save(value,hub.path)
                             return self.reply(200,value['recorder'])

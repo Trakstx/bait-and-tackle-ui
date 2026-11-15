@@ -1,0 +1,18 @@
+{
+  "compiler": {
+    "url": "https://github.com/skeeto/w64devkit/releases/download/v2.10.0/w64devkit-x64-2.10.0.7z.exe",
+    "sha256": "18d0a4c71a166f8401ab6305781bec5882b40b5e06ba9807c61cb5f3b3c6325e",
+    "license": "Compiler has its upstream component licenses; build-time only."
+  },
+  "sdk": {
+    "url": "https://codeload.github.com/crosire/reshade/zip/18deaa52de0c425a78b329e9cb3c497281cd00ec",
+    "sha256": "a448aa39bcd8be70e533b41dfd8e15f5a06660ddf824039e2530bcde9febb1d4",
+    "commit": "18deaa52de0c425a78b329e9cb3c497281cd00ec",
+    "license": "BSD-3-Clause, see ReShade-LICENSE.md"
+  },
+  "vendor_seed": {
+    "url": "https://github.com/Trakstx/bait-and-tackle-ui/releases/download/v0.7.0/Bait-and-Tackle-v0.7.0.zip",
+    "sha256": "9c637eebb8801a5476eb2640950f008e14ef81720c4dfdbbe8ceb1f79846fa6e",
+    "purpose": "Frozen runtime, maps, skin and third-party assets. All six BFT native binaries are rebuilt. All top-level helper application source is replaced from this commit. This does not fix the audit's outdated-runtime finding."
+  }
+}

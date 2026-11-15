@@ -65,6 +65,8 @@ def matches(rule,text,character):
 
 class TriggerEngine:
  def __init__(self,config=None,profile_dir=None):
+  from warrior_defensive import Defensive
+  self.defensive=Defensive()
   self.lock=threading.RLock();self.profile_dir=Path(profile_dir) if profile_dir else None;self.config=validate(config);self.character='Waiting for login';self.server='';self.profile_key='';self.detected=None;self.level=None;self.active=[];self.last_fire={};self.recent=deque(maxlen=30);self.sound_pending=False;self.audio_pending=deque(maxlen=4);self.zone='';self._class=None
  def configure(self,config):
   with self.lock:
@@ -88,6 +90,8 @@ class TriggerEngine:
  def set_character(self,path):
   path=Path(path)
   with self.lock:
+   from warrior_defensive import Defensive
+   self.defensive=Defensive()
    self.character,self.server=identity(path);self.profile_key=hashlib.sha256(str(path.resolve()).casefold().encode()).hexdigest();self.detected=None;self.level=None;self.active.clear();self.last_fire.clear();self.audio_pending.clear();self.recent.clear();self.sound_pending=False;self.audio_pending=deque(maxlen=4);self.zone=''
    saved=self.profile_path()
    if saved:
@@ -122,6 +126,9 @@ class TriggerEngine:
    if self.learn(text):return
    if text.startswith(('LOADING, PLEASE WAIT','Welcome to EverQuest!')):self.active.clear();self.last_fire.clear();self.audio_pending.clear();self.sound_pending=False;self.audio_pending=deque(maxlen=4);return
    if not self.config['enabled']:return
+   if self.current_class()=='warrior':
+    notice=self.defensive.consume(text,now,self.level)
+    if notice and self.config['sound_enabled']:self.audio_pending.append(dict(text=notice,severity='warn'))
    for rule in self.rules():
     if self.eligible(rule) and matches(rule,text,self.character) and now-self.last_fire.get(rule['id'],-1e30)>=rule['cooldown_seconds']:
      self.last_fire[rule['id']]=now;self.fire(rule,text,now)
@@ -142,4 +149,9 @@ class TriggerEngine:
  def snapshot(self,now):
   with self.lock:
    self.active=[r for r in self.active if r['ends']>now];kind=self.current_class()
-   return {'character':self.character,'server':self.server,'profile_key':self.profile_key,'class':kind,'detected_class':self.detected,'level':self.level,'class_source':'Manual override' if self.profile_key in self.config['class_overrides'] else 'Own /who log record' if self.detected else 'Unknown — run /who or choose a class override','alerts':[dict(r,remaining=max(0,r['ends']-now)) for r in reversed(self.active)],'recent':list(self.recent),'presets':[dict(r,eligible=self.eligible(r)) for r in self.rules() if r.get('builtin')],'classes':P99_CLASSES}
+   defensive_rows=[]
+   if kind=='warrior' and self.config['enabled'] and (self.level is None or self.level>=55):
+    notice=self.defensive.tick(now)
+    if notice and self.config['sound_enabled']:self.audio_pending.append(dict(text=notice,severity='warn'))
+    defensive_rows=[self.defensive.row(now)]
+   return {'character':self.character,'server':self.server,'profile_key':self.profile_key,'class':kind,'detected_class':self.detected,'level':self.level,'class_source':'Manual override' if self.profile_key in self.config['class_overrides'] else 'Own /who log record' if self.detected else 'Unknown — run /who or choose a class override','alerts':defensive_rows+[dict(r,remaining=max(0,r['ends']-now)) for r in reversed(self.active)],'recent':list(self.recent),'presets':[dict(r,eligible=self.eligible(r)) for r in self.rules() if r.get('builtin')],'classes':P99_CLASSES}

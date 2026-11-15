@@ -10,3 +10,9 @@ settings.json
 ch_chain.json
 *Inventory.txt
 eqlog_*.txt
+
+# Security build staging and test fixtures
+build/
+.test-tmp/
+__pycache__/
+*.pyc

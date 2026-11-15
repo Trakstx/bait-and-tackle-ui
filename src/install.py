@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from process_check import is_game_running
 
 ROOT = Path(__file__).resolve().parent
@@ -57,7 +58,16 @@ def main():
         if not (game / 'eqgame.exe').is_file(): raise RuntimeError('The selected folder does not contain eqgame.exe.')
     if is_game_running():
         raise RuntimeError('Close EverQuest before installing.')
-    if not ctypes.windll.shell32.IsUserAnAdmin():
+    # Only the installation write operation may request elevation, and only when required.
+    writable = True
+    for relative, source in files:
+        parent = (game / relative).parent
+        while not parent.exists(): parent = parent.parent
+        try:
+            with tempfile.TemporaryFile(dir=parent): pass
+        except PermissionError:
+            writable = False; break
+    if not writable and not ctypes.windll.shell32.IsUserAnAdmin():
         if args.elevated:
             raise RuntimeError('Administrator access was not granted.')
         command = subprocess.list2cmdline([str(Path(__file__).resolve()), '--game', str(game), '--elevated'])
@@ -117,7 +127,7 @@ def main():
     if shortcut.exists():
         backup.mkdir(parents=True, exist_ok=True)
         shutil.copy2(shortcut, backup / 'Play Bait and Tackle.cmd')
-    shortcut.write_text('@echo off\nstart "" "' + str(pythonw) + '" "' + str(launcher) + '"\n')
+    shortcut.write_text('@echo off\nstart "" "' + str(game / 'BFT_HUD/Play Bait and Tackle.exe') + '"\n')
     print('\nInstalled Bait & Tackle UI and HUD prototype.')
     print('Desktop launcher:', shortcut)
     print('Backups:', backup)

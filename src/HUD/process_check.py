@@ -3,6 +3,21 @@ import ctypes
 from ctypes import wintypes
 
 
+def process_still_running(kernel, pid):
+    """A listed process may already be signaled during Windows teardown.
+
+    Inaccessible processes remain blockers: absence of permission is not proof
+    that it is safe to change game files.
+    """
+    handle = kernel.OpenProcess(0x100000, False, pid)  # SYNCHRONIZE only
+    if not handle:
+        return True
+    try:
+        return kernel.WaitForSingleObject(handle, 0) != 0
+    finally:
+        kernel.CloseHandle(handle)
+
+
 def find_game_processes(executable=None):
     from pathlib import Path
     from session_lifecycle import k, process_path
@@ -23,6 +38,10 @@ def find_game_processes(executable=None):
     kernel.Process32NextW.argtypes = kernel.Process32FirstW.argtypes
     kernel.Process32NextW.restype = wintypes.BOOL
     kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenProcess.restype = wintypes.HANDLE
+    kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel.WaitForSingleObject.restype = wintypes.DWORD
     snapshot = kernel.CreateToolhelp32Snapshot(2, 0)
     if snapshot == ctypes.c_void_p(-1).value:
         raise ctypes.WinError(ctypes.get_last_error())
@@ -31,7 +50,7 @@ def find_game_processes(executable=None):
         entry.dwSize = ctypes.sizeof(entry)
         ok = kernel.Process32FirstW(snapshot, ctypes.byref(entry))
         while ok:
-            if entry.szExeFile.casefold() == 'eqgame.exe':
+            if entry.szExeFile.casefold() == 'eqgame.exe' and process_still_running(kernel, entry.th32ProcessID):
                 if executable is None:
                     matches.append(entry.th32ProcessID)
                 else:
